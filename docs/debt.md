@@ -62,3 +62,8 @@ Förutom det uppenbara att projektet ska göras i VUE så har vi hittat:
     Var: web/src/components/PrimaryButton.jsx
     Varför det är ett problem: Den används ingenstans och onödig kod kan förvirra utvecklare som inte vet om den är säker att ta bort.
     Allvar: Låg
+
+12. Vad: Inkonsekventa knapp mönster och en klasskomponent bland funktionella komponenter
+    Var: button.jsx (inline style), PrimaryButton.jsx (klasskomponent + css-klass), Login.jsx:29 (className direkt)
+    Varför det är ett problem: Tre parallella sätt att göra samma UI-element gör varje styling-ändring till en sökning i flera filer. PrimaryButton.jsx är dessutom en klasskomponent medan resten av kodbasen använder funktionella komponenter med hooks vilket bryter mönstret i projektet.
+    Allvar: Medel
