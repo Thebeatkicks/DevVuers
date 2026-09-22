@@ -32,6 +32,7 @@ Fråga Marcus.
 - Vid arbete skapar man en egen kortlivad branch, döper den beskrivande. När man är klar för man en pullrequest, meddelar det i discord. (Automatiserar detta senare), sedan får den som har tid granska och merga. 
 
 ## Skuld
+Se docs/debt.md för hela listan av alla funna skulder.
 
 Förutom det uppenbara: Att projektet ska göras i VUE så har vi hittat:
 
