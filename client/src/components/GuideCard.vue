@@ -1,21 +1,21 @@
 <script setup>
-import { useRouter } from 'vue-router'
+import { useRouter } from "vue-router";
 
 const props = defineProps({
   guide: {
     type: Object,
-    required: true
-  }
-})
+    required: true,
+  },
+});
 
-const router = useRouter()
+const router = useRouter();
 
 const goToGuideDetails = () => {
   router.push({
-    name: 'guide-details',
-    params: { id: props.guide.id }
-  })
-}
+    name: "guide-details",
+    params: { id: props.guide.id },
+  });
+};
 </script>
 
 <template>

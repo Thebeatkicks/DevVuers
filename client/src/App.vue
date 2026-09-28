@@ -1,5 +1,5 @@
 <script setup>
-import { RouterLink, RouterView } from 'vue-router'
+import { RouterLink, RouterView } from "vue-router";
 </script>
 
 <template>
@@ -36,7 +36,6 @@ nav {
   display: flex;
   gap: 1rem;
   align-items: center;
-  
 }
 
 nav a {
