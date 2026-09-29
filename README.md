@@ -8,19 +8,23 @@ Plattform för friluftsdestinationer. Redaktionella guider, användarnas egna tu
 npm install
 docker compose -f docker-compose.dev.yml up -d
 npm run seed
-npm start
+npm run dev
 ```
 
-Appen ligger sen på http://localhost:3000 och API:et pa http://localhost:4000.
+Appen ligger sen på:
+- http://localhost:3000 för web
+- http://localhost:3001 för client
+- http://localhost:4000 för API:et
 
 ## Struktur
 
 - `api/` – Express + Postgres (Drizzle)
 - `web/` – React + Vite
+- `client/` – Vue 3 + Vite
 
 ## Deploy
 
-Fråga Marcus.
+Inte aktuellt än.
 
 
 ## Working agreement
@@ -33,11 +37,3 @@ Fråga Marcus.
 
 ## Skuld
 Se docs/debt.md för hela listan av alla funna skulder.
-
-Förutom det uppenbara: Att projektet ska göras i VUE så har vi hittat:
-
-- Lösenord hashas inte och lagras med plaintext
-- Det finns inget skapa konto
-- favicon broken
-- Deployment instructions
-- npm run dev -> Readme 
