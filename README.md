@@ -2,6 +2,12 @@
 
 Plattform för friluftsdestinationer. Redaktionella guider, användarnas egna turer och bilder.
 
+## Struktur
+
+- `api/` – Express + Postgres (Drizzle)
+- `web/` – React + Vite
+- `client/` – Vue 3 + Vite
+
 ## Kom igång
 
 ```bash
@@ -16,11 +22,21 @@ Appen ligger sen på:
 - http://localhost:3001 för client
 - http://localhost:4000 för API:et
 
-## Struktur
+## Kommandon
 
-- `api/` – Express + Postgres (Drizzle)
-- `web/` – React + Vite
-- `client/` – Vue 3 + Vite
+Kör från repots rot:
+
+| Kommando | Vad det gör |
+|---|---|
+| `npm run dev` | Startar api, web och client parallellt |
+| `npm run lint` | Lintar `client` (täcker inte `api` eller `web`) |
+| `npm run format:check` | Kontrollerar formatering i `client` |
+| `npm test` | Kör tester för `client` |
+| `npm run build` | Bygger `web` och `client` (inte `api`) |
+
+### `npm start`
+
+Det finns inget `npm start`-skript. Använd `npm run dev` för utveckling och `npm run build` för att bygga. Deploy är inte aktuellt än, så något startskript för produktion saknas.
 
 ## Deploy
 
