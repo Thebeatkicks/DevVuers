@@ -1,35 +1,34 @@
-<script setup>
-import { ref, onMounted, computed } from "vue";
+<script setup lang="ts">
+import { computed, onMounted, ref } from "vue";
+import type { Guide } from "@utpost/shared";
+import { get } from "../api";
 
-const guides = ref([]);
+const guides = ref<Guide[]>([]);
 const searchQuery = ref("");
 
-onMounted(() => {
-  fetchGuides();
-});
-
-const fetchGuides = async () => {
+const fetchGuides = async (): Promise<void> => {
   try {
-    const response = await fetch("http://localhost:4000/api/guides");
-    const data = await response.json();
-    guides.value = data;
+    guides.value = await get<Guide[]>("/guides");
   } catch (error) {
     console.error("Error fetching guides:", error);
   }
 };
 
+onMounted(() => {
+  void fetchGuides();
+});
+
 const filterGuides = computed(() => {
-  if (searchQuery.value.trim() === "") {
-    return guides.value;
-  }
+  if (searchQuery.value.trim() === "") return guides.value;
+
   return guides.value.filter((guide) =>
     guide.title.toLowerCase().includes(searchQuery.value.toLowerCase()),
   );
 });
 
-const searchGuides = () => {
+const searchGuides = (): void => {
   if (searchQuery.value.trim() === "") {
-    fetchGuides();
+    void fetchGuides();
   } else {
     guides.value = guides.value.filter((guide) =>
       guide.title.toLowerCase().includes(searchQuery.value.toLowerCase()),

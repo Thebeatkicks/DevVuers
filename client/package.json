@@ -15,6 +15,7 @@
     "format:check": "prettier --check src/"
   },
   "dependencies": {
+    "@utpost/shared": "file:../shared",
     "vue": "^3.5.40",
     "vue-router": "^5.2.0"
   },
