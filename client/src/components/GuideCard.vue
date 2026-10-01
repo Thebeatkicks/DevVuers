@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { useRouter } from "vue-router";
-import { Guide } from "@utpost/shared";
+import type { Guide } from "@utpost/shared";
 
 const props = defineProps<{ guide: Guide }>();
 
