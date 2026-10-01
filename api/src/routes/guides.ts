@@ -1,10 +1,14 @@
-import { Router } from 'express';
-import { pool } from '../db/client.js';
+import { Router } from "express";
+import type { Request, Response } from "express";
+import type { Guide } from "@utpost/shared";
+import { pool } from "../db/client.js";
 
 export const guidesRouter = Router();
 
-guidesRouter.get('/', async (req, res) => {
-  const result = await pool.query('select * from guides order by updated_at desc');
+guidesRouter.get("/", async (_req: Request, res: Response<Guide[]>) => {
+  const result = await pool.query<Guide>(
+    "select * from guides order by updated_at desc",
+  );
   res.json(result.rows);
 });
 
