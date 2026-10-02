@@ -1,81 +1,89 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { render, screen } from '@testing-library/vue'
-import userEvent from '@testing-library/user-event'
-import '@testing-library/jest-dom/vitest'
-import type { Guide } from '@utpost/shared'
-import GuidesView from './GuidesView.vue'
-import { get } from '../api.js'
+import { describe, it, expect, vi, beforeEach } from "vitest";
+import { render, screen } from "@testing-library/vue";
+import userEvent from "@testing-library/user-event";
+import "@testing-library/jest-dom/vitest";
+import type { Guide } from "@utpost/shared";
+import GuidesView from "./GuidesView.vue";
+import { get } from "../api.js";
 
-
-vi.mock('../api', () => ({ get: vi.fn() }))
-const mockedGet = vi.mocked(get)
+vi.mock("../api", () => ({ get: vi.fn() }));
+const mockedGet = vi.mocked(get);
 
 // Kontraktet styr mockdatan: glömmer ni ett fält säger typecheck ifrån.
 const guide = (overrides: Partial<Guide>): Guide => ({
   id: 1,
-  slug: 'kebnekaise',
-  title: 'Kebnekaise',
-  region: 'Lappland',
-  difficulty: 'svår',
+  slug: "kebnekaise",
+  title: "Kebnekaise",
+  region: "Lappland",
+  difficulty: "svår",
   length_km: 18,
-  body_html: '<p>Sveriges tak</p>',
+  body_html: "<p>Sveriges tak</p>",
   hero_image: null,
   published: true,
   author_id: 1,
-  updated_at: '2026-09-01T00:00:00.000Z',
+  updated_at: "2026-09-01T00:00:00.000Z",
   ...overrides,
-})
+});
 
 const renderView = () =>
-  render(GuidesView, { global: { stubs: { RouterLink: { template: '<a><slot /></a>' } } } })
+  render(GuidesView, {
+    global: { stubs: { RouterLink: { template: "<a><slot /></a>" } } },
+  });
 
-describe('GuidesView', () => {
+describe("GuidesView", () => {
   beforeEach(() => {
     mockedGet.mockResolvedValue([
-      guide({ id: 1, title: 'Kebnekaise', region: 'Lappland' }),
-      guide({ id: 2, slug: 'sodra-myrleden', title: 'Södra Myrleden', region: 'Småland' }),
-    ])
-  })
+      guide({ id: 1, title: "Kebnekaise", region: "Lappland" }),
+      guide({
+        id: 2,
+        slug: "sodra-myrleden",
+        title: "Södra Myrleden",
+        region: "Småland",
+      }),
+    ]);
+  });
   //Test 1
-  it('visar guiderna från API:et', async () => {
-    renderView()
-    expect(await screen.findByText('Kebnekaise')).toBeInTheDocument()
-    expect(screen.getByText('2 av 2')).toBeInTheDocument()
-  })
+  it("visar guiderna från API:et", async () => {
+    renderView();
+    expect(await screen.findByText("Kebnekaise")).toBeInTheDocument();
+    expect(screen.getByText("2 av 2")).toBeInTheDocument();
+  });
 
   //Test 2
 
-it('filtrerar på landskap när användaren söker', async () => {
-  const user = userEvent.setup()
-  renderView()
-  await screen.findByText('Kebnekaise')
+  it("filtrerar på landskap när användaren söker", async () => {
+    const user = userEvent.setup();
+    renderView();
+    await screen.findByText("Kebnekaise");
 
-  await user.type(screen.getByLabelText('Sök'), 'små')
+    await user.type(screen.getByLabelText("Sök"), "små");
 
-  expect(screen.getByText('Södra Myrleden')).toBeInTheDocument()
-  expect(screen.queryByText('Kebnekaise')).not.toBeInTheDocument()
-  expect(screen.getByText('1 av 2')).toBeInTheDocument()
-})
+    expect(screen.getByText("Södra Myrleden")).toBeInTheDocument();
+    expect(screen.queryByText("Kebnekaise")).not.toBeInTheDocument();
+    expect(screen.getByText("1 av 2")).toBeInTheDocument();
+  });
 
-//Test 3
-it('visar ett fel när API:et inte svarar', async () => {
-  mockedGet.mockRejectedValueOnce(new Error('API svarade 500'))
-  renderView()
-  expect(await screen.findByRole('alert')).toHaveTextContent('API svarade 500')
-})
+  //Test 3
+  it("visar ett fel när API:et inte svarar", async () => {
+    mockedGet.mockRejectedValueOnce(new Error("API svarade 500"));
+    renderView();
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      "API svarade 500",
+    );
+  });
 
-//Test 4
-it('säger till när inget matchar', async () => {
-  const user = userEvent.setup()
-  renderView()
-  await screen.findByText('Kebnekaise')
+  //Test 4
+  it("säger till när inget matchar", async () => {
+    const user = userEvent.setup();
+    renderView();
+    await screen.findByText("Kebnekaise");
 
-  await user.type(screen.getByLabelText('Sök'), 'öland')
+    await user.type(screen.getByLabelText("Sök"), "öland");
 
-  expect(screen.getByText('Inga guider matchar sökningen.')).toBeInTheDocument()
-  expect(screen.getByText('0 av 2')).toBeInTheDocument()
-  expect(screen.queryByText('Kebnekaise')).not.toBeInTheDocument()
-})
-
-})
-
+    expect(
+      screen.getByText("Inga guider matchar sökningen."),
+    ).toBeInTheDocument();
+    expect(screen.getByText("0 av 2")).toBeInTheDocument();
+    expect(screen.queryByText("Kebnekaise")).not.toBeInTheDocument();
+  });
+});

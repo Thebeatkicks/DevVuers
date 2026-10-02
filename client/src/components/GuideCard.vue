@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import type { Guide } from '@utpost/shared'
+import type { Guide } from "@utpost/shared";
 
-defineProps<{ guide: Guide }>()
+defineProps<{ guide: Guide }>();
 </script>
 
 <template>
@@ -9,7 +9,9 @@ defineProps<{ guide: Guide }>()
     <h3>
       <RouterLink :to="`/guider/${guide.slug}`">{{ guide.title }}</RouterLink>
     </h3>
-    <p class="muted">{{ guide.region }} · {{ guide.difficulty }} · {{ guide.length_km }} km</p>
+    <p class="muted">
+      {{ guide.region }} · {{ guide.difficulty }} · {{ guide.length_km }} km
+    </p>
   </article>
 </template>
 

@@ -1,35 +1,37 @@
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
-import type { Guide } from '@utpost/shared'
-import { get } from '../api'
-import GuideCard from '../components/GuideCard.vue'
+import { ref, computed, onMounted } from "vue";
+import type { Guide } from "@utpost/shared";
+import { get } from "../api";
+import GuideCard from "../components/GuideCard.vue";
 
-const guides = ref<Guide[]>([])
-const query = ref('')
-const loading = ref(true)
-const error = ref<string | null>(null)
+const guides = ref<Guide[]>([]);
+const query = ref("");
+const loading = ref(true);
+const error = ref<string | null>(null);
 
 const load = async () => {
-  loading.value = true
-  error.value = null
+  loading.value = true;
+  error.value = null;
   try {
-    guides.value = await get<Guide[]>('/guides')
+    guides.value = await get<Guide[]>("/guides");
   } catch (err: unknown) {
-    error.value = err instanceof Error ? err.message : 'Kunde inte hämta guider'
+    error.value =
+      err instanceof Error ? err.message : "Kunde inte hämta guider";
   } finally {
-    loading.value = false
+    loading.value = false;
   }
-}
+};
 
-onMounted(load)
+onMounted(load);
 
 const visible = computed(() => {
-  const q = query.value.trim().toLowerCase()
-  if (!q) return guides.value
+  const q = query.value.trim().toLowerCase();
+  if (!q) return guides.value;
   return guides.value.filter(
-    (g) => g.title.toLowerCase().includes(q) || g.region.toLowerCase().includes(q),
-  )
-})
+    (g) =>
+      g.title.toLowerCase().includes(q) || g.region.toLowerCase().includes(q),
+  );
+});
 </script>
 
 <template>
@@ -38,7 +40,12 @@ const visible = computed(() => {
 
     <div class="searchrow">
       <label for="guide-search">Sök</label>
-      <input id="guide-search" v-model="query" type="search" placeholder="Namn eller landskap" />
+      <input
+        id="guide-search"
+        v-model="query"
+        type="search"
+        placeholder="Namn eller landskap"
+      />
       <span class="muted">{{ visible.length }} av {{ guides.length }}</span>
     </div>
 
