@@ -15,11 +15,13 @@
     "format:check": "prettier --check src/"
   },
   "dependencies": {
+    "@utpost/shared": "file:../shared",
     "vue": "^3.5.40",
     "vue-router": "^5.2.0"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
+    "@typescript-eslint/parser": "^8.71.0",
     "@vitejs/plugin-vue": "^6.0.0",
     "@vitest/eslint-plugin": "^1.6.27",
     "@vue/test-utils": "^2.4.11",

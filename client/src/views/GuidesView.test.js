@@ -9,6 +9,7 @@ describe("GuidesView", () => {
     vi.stubGlobal(
       "fetch",
       vi.fn().mockResolvedValue({
+        ok: true,
         json: vi.fn().mockResolvedValue([
           {
             id: 1,

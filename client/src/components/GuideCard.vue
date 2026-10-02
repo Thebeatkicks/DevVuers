@@ -1,12 +1,8 @@
-<script setup>
+<script setup lang="ts">
 import { useRouter } from "vue-router";
+import type { Guide } from "@utpost/shared";
 
-const props = defineProps({
-  guide: {
-    type: Object,
-    required: true,
-  },
-});
+const props = defineProps<{ guide: Guide }>();
 
 const router = useRouter();
 
