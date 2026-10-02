@@ -1,9 +1,11 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen } from '@testing-library/vue'
 import userEvent from '@testing-library/user-event'
+import '@testing-library/jest-dom/vitest'
 import type { Guide } from '@utpost/shared'
 import GuidesView from './GuidesView.vue'
-import { get } from '../api.ts'
+import { get } from '../api.js'
+
 
 vi.mock('../api', () => ({ get: vi.fn() }))
 const mockedGet = vi.mocked(get)
@@ -40,9 +42,8 @@ describe('GuidesView', () => {
     expect(await screen.findByText('Kebnekaise')).toBeInTheDocument()
     expect(screen.getByText('2 av 2')).toBeInTheDocument()
   })
-})
 
-//Test 2
+  //Test 2
 
 it('filtrerar på landskap när användaren söker', async () => {
   const user = userEvent.setup()
@@ -75,3 +76,6 @@ it('säger till när inget matchar', async () => {
   expect(screen.getByText('0 av 2')).toBeInTheDocument()
   expect(screen.queryByText('Kebnekaise')).not.toBeInTheDocument()
 })
+
+})
+

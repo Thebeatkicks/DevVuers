@@ -1,21 +1,26 @@
 <script setup lang="ts">
-import { useRouter } from "vue-router";
-import type { Guide } from "@utpost/shared";
+import type { Guide } from '@utpost/shared'
 
-const props = defineProps<{ guide: Guide }>();
-
-const router = useRouter();
-
-const goToGuideDetails = () => {
-  router.push({
-    name: "guide-details",
-    params: { id: props.guide.id },
-  });
-};
+defineProps<{ guide: Guide }>()
 </script>
 
 <template>
-  <article @click="goToGuideDetails">
-    <h2>{{ guide.title }}</h2>
+  <article class="card">
+    <h3>
+      <RouterLink :to="`/guider/${guide.slug}`">{{ guide.title }}</RouterLink>
+    </h3>
+    <p class="muted">{{ guide.region }} · {{ guide.difficulty }} · {{ guide.length_km }} km</p>
   </article>
 </template>
+
+<style scoped>
+.card {
+  border: 1px solid #ddd;
+  padding: 12px;
+  border-radius: 4px;
+}
+.muted {
+  color: #777;
+  font-size: 14px;
+}
+</style>
