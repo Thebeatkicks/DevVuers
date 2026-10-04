@@ -1,59 +1,83 @@
-<script setup>
-import { ref, onMounted, computed } from "vue";
+<script setup lang="ts">
+import { ref, computed, onMounted } from "vue";
+import type { Guide } from "@utpost/shared";
+import { get } from "../api";
+import GuideCard from "../components/GuideCard.vue";
 
-const guides = ref([]);
-const searchQuery = ref("");
+const guides = ref<Guide[]>([]);
+const query = ref("");
+const loading = ref(true);
+const error = ref<string | null>(null);
 
-onMounted(() => {
-  fetchGuides();
-});
-
-const fetchGuides = async () => {
+const load = async () => {
+  loading.value = true;
+  error.value = null;
   try {
-    const response = await fetch("http://localhost:4000/api/guides");
-    const data = await response.json();
-    guides.value = data;
-  } catch (error) {
-    console.error("Error fetching guides:", error);
+    guides.value = await get<Guide[]>("/guides");
+  } catch (err: unknown) {
+    error.value =
+      err instanceof Error ? err.message : "Kunde inte hämta guider";
+  } finally {
+    loading.value = false;
   }
 };
 
-const filterGuides = computed(() => {
-  if (searchQuery.value.trim() === "") {
-    return guides.value;
-  }
-  return guides.value.filter((guide) =>
-    guide.title.toLowerCase().includes(searchQuery.value.toLowerCase()),
+onMounted(load);
+
+const visible = computed(() => {
+  const q = query.value.trim().toLowerCase();
+  if (!q) return guides.value;
+  return guides.value.filter(
+    (g) =>
+      g.title.toLowerCase().includes(q) || g.region.toLowerCase().includes(q),
   );
 });
-
-const searchGuides = () => {
-  if (searchQuery.value.trim() === "") {
-    fetchGuides();
-  } else {
-    guides.value = guides.value.filter((guide) =>
-      guide.title.toLowerCase().includes(searchQuery.value.toLowerCase()),
-    );
-  }
-};
 </script>
 
 <template>
-  <div class="guides">
-    <h1>Guides</h1>
-    <p>
-      Welcome to the guides section! Here you can find various guides to help
-      you navigate through our application.
-    </p>
-    <input v-model="searchQuery" placeholder="Search guides..." />
-    <button @click="searchGuides">Search</button>
+  <div>
+    <h1>Guider</h1>
 
-    <ul>
-      <li v-for="guide in filterGuides" :key="guide.id">
-        <router-link :to="`/guides/${guide.id}`">{{ guide.title }}</router-link>
-      </li>
-    </ul>
+    <div class="searchrow">
+      <label for="guide-search">Sök</label>
+      <input
+        id="guide-search"
+        v-model="query"
+        type="search"
+        placeholder="Namn eller landskap"
+      />
+      <span class="muted">{{ visible.length }} av {{ guides.length }}</span>
+    </div>
+
+    <p v-if="loading">Laddar guider…</p>
+    <p v-else-if="error" role="alert">Kunde inte hämta guider: {{ error }}</p>
+    <p v-else-if="visible.length === 0">Inga guider matchar sökningen.</p>
+
+    <div v-else class="grid">
+      <GuideCard v-for="guide in visible" :key="guide.id" :guide="guide" />
+    </div>
   </div>
 </template>
 
-<style scoped></style>
+<style scoped>
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 16px;
+}
+.searchrow {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  margin: 16px 0;
+}
+.searchrow input {
+  flex: 1;
+  padding: 8px;
+  border: 1px solid #ccc;
+}
+.muted {
+  color: #777;
+  font-size: 14px;
+}
+</style>
