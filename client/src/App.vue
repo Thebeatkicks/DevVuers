@@ -1,5 +1,11 @@
-<script setup>
+<script setup lang="ts">
 import { RouterLink, RouterView } from "vue-router";
+import { computed } from 'vue'
+import { storeToRefs } from 'pinia'
+import { useSessionStore } from '@/stores/session'
+
+const session = useSessionStore()
+const isLoggedIn = computed<boolean>(() => session.isLoggedIn)
 </script>
 
 <template>
@@ -10,6 +16,9 @@ import { RouterLink, RouterView } from "vue-router";
         <RouterLink to="/guides">Guides</RouterLink>
         <RouterLink to="/about">About</RouterLink>
         <RouterLink to="/tours">Tours</RouterLink>
+
+        <RouterLink to="/profil" v-if="isLoggedIn">Min sida</RouterLink>
+        <RouterLink to="/logga-in" v-else>Logga in</RouterLink>
       </nav>
     </div>
   </header>

@@ -41,6 +41,10 @@ const router = createRouter({
       name: "tour-detail",
       component: TourDetail,
     },
+        {
+      path: "/profil",
+      name: "profil",
+    }
   ],
 });
 

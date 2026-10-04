@@ -22,6 +22,12 @@ export interface User {
     role: string, 
     createdAt: string, 
 }
+
+export interface LoginResponse {
+  token: string
+  user: User
+}
+
 export interface TourLog {
   id: number
   tour_id: number
