@@ -23,6 +23,11 @@ export interface User {
     createdAt: string, 
 }
 
+export interface LoginRequest {
+  email: string
+  password_hash: string
+}
+
 export interface LoginResponse {
   token: string
   user: User

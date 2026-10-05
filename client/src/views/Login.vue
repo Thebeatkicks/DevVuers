@@ -2,35 +2,17 @@
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useSessionStore } from '@/stores/session'
-import { logIn } from '../api/auth.ts'
-import type { LoginResponse, User } from '../../../shared/src/types'
+import { LoginRequest } from '@utpost/shared'
 
 const session = useSessionStore()
 const router = useRouter()
 const email = ref<string>('')
 const password_hash = ref<string>('')
-const errorParagraph = ref<string | null>(null)
-const loading = ref(false)
-
-const user = ref<User>()
-const token = ref<string>()
 
 const onSubmit = async () => {
-    loading.value = true
-    errorParagraph.value = null
-    try {
-        const data = await logIn();
-        user.value = data.user
-        token.value = data.token
-        localStorage.setItem('token', data.token)
-        localStorage.setItem('user', JSON.stringify(data.user))
-    } catch (error) {
-        errorParagraph.value = 'Kunde inte logga in.'
-    } finally {
-        loading.value = false
-    }
+    await session.login({ email: email.value, password_hash: password_hash.value })
+    if (session.isLoggedIn) await router.push('/profil')
 }
-
 </script>
 
 <template>
