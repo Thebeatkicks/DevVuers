@@ -14,6 +14,25 @@ export interface Guide {
   updated_at: string;
 }
 
+export interface User {
+    id: number,
+    email: string,
+    password_hash: string, 
+    display_name: string, 
+    role: string, 
+    createdAt: string, 
+}
+
+export interface LoginRequest {
+  email: string
+  password_hash: string
+}
+
+export interface LoginResponse {
+  token: string
+  user: User
+}
+
 export interface TourLog {
   id: number
   tour_id: number
