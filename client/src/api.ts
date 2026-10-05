@@ -7,14 +7,14 @@ export async function get<T>(path: string): Promise<T> {
 }
 
 export async function post<TResponse, TBody = unknown>(
-  path: string, 
-  body: TBody
+  path: string,
+  body: TBody,
 ): Promise<TResponse> {
   const response = await fetch(`${API_URL}${path}`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
     body: JSON.stringify(body),
   });
   if (!response.ok) throw new Error(`API-fel: ${response.status}`);
   return (await response.json()) as TResponse;
-};
+}
