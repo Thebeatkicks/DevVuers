@@ -7,6 +7,12 @@ Plattform för friluftsdestinationer. Redaktionella guider, användarnas egna tu
 - `api/` – Express + Postgres (Drizzle)
 - `web/` – React + Vite
 - `client/` – Vue 3 + Vite
+- `shared/` – TypeScript-typer för det API:et svarar med @utpost/shared: Guide, Tour, TourLog, User och ApiError. Fälten heter som i svaret snake_case. Används av både api/ och client/. Ändras ett svar ändras typen, i samma PR
+
+## Krav 
+
+- Node.js `^22.18.0 || >=24.12.0`
+- Docker (för Postgres)
 
 ## Kom igång
 
@@ -33,6 +39,8 @@ Kör från repots rot:
 | `npm run format:check` | Kontrollerar formatering i `client` |
 | `npm test` | Kör tester för `client` |
 | `npm run build` | Bygger `web` och `client` (inte `api`) |
+| `npm run typecheck` | Typkontrollerar `shared` och `api` (inte `web` eller `client`) |
+
 
 ### `npm start`
 

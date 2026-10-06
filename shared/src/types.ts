@@ -14,6 +14,16 @@ export interface Guide {
   updated_at: string;
 }
 
+export interface Tour {
+  id: number
+  user_id: number
+  guide_id: number | null
+  title: string
+  started_at: string
+  distance_m: number
+  notes: string | null
+}
+
 export interface User {
     id: number,
     email: string,
