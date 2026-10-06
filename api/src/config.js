@@ -1,3 +1,4 @@
+/*
 export const config = {
   databaseUrl: 'postgres://utpost:utpost@localhost:5433/utpost',
   jwtSecret: 'utpost-super-secret-2021',
@@ -5,8 +6,9 @@ export const config = {
   uploadDir: './uploads',
 };
 
+*/
 
-/*lösningen så testet blir grönt.
+//lösningen så testet blir grönt.
 const jwtSecret = process.env.JWT_SECRET
 
 if (!jwtSecret) {
@@ -19,4 +21,3 @@ export const config = {
   port: 4000,
   uploadDir: './uploads',
 } 
-  */
