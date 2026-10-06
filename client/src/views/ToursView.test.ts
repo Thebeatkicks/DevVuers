@@ -20,47 +20,48 @@ describe("ToursView", () => {
     mockedFetch.mockReset();
   });
   //test 1
-    it("visar turens uppgifter och en länk till turen", async () => {
+  it("visar turens uppgifter och en länk till turen", async () => {
     mockedFetch.mockResolvedValue(
-        respondWith([
+      respondWith([
         {
-            id: 7,
-            title: "Kebnekaise runt",
-            distance_m: 12345,
-            user: { display_name: "Alex" },
-            guide: { title: "Fjällvandring" },
-            photos: [{ id: 1 }, { id: 2 }],
+          id: 7,
+          title: "Kebnekaise runt",
+          distance_m: 12345,
+          user: { display_name: "Alex" },
+          guide: { title: "Fjällvandring" },
+          photos: [{ id: 1 }, { id: 2 }],
         },
-        ]),
+      ]),
     );
 
     render(ToursView, {
-        global: {
+      global: {
         stubs: {
-            RouterLink: {
+          RouterLink: {
             props: ["to"],
             template: '<a :href="to"><slot /></a>',
-            },
+          },
         },
-        },
+      },
     });
 
     expect(
-        await screen.findByRole("link", { name: "Kebnekaise runt" }),
+      await screen.findByRole("link", { name: "Kebnekaise runt" }),
     ).toHaveAttribute("href", "/tours/7");
     expect(screen.getByText("Alex")).toBeInTheDocument();
     expect(screen.getByText("Fjällvandring")).toBeInTheDocument();
     expect(screen.getByText("12.3 km")).toBeInTheDocument();
     expect(screen.getByText("2")).toBeInTheDocument();
-    });
-    
-    //test 2
-    it("visar ett fel när det inte går att hämta turerna", async () => {
+  });
+
+  //test 2
+  it("visar ett fel när det inte går att hämta turerna", async () => {
     mockedFetch.mockRejectedValue(new Error("Nätverksfel"));
 
     render(ToursView);
 
-    expect(await screen.findByText("Kunde inte ladda turer.")).toBeInTheDocument();
-    });
+    expect(
+      await screen.findByText("Kunde inte ladda turer."),
+    ).toBeInTheDocument();
+  });
 });
-
