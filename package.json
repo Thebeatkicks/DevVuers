@@ -9,6 +9,7 @@
     "dev:client": "npm run dev --workspace=client",
     "dev:api": "npm run dev --workspace=api",
     "seed": "npm run seed --workspace=api",
+    "mongo:smoke": "npm run mongo:smoke --workspace=api",
     "lint": "npm run lint --workspace=client",
     "format:check": "npm run format:check --workspace=client",
     "format": "npm run format --workspace=client",
