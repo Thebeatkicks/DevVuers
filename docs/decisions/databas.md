@@ -9,16 +9,15 @@ Idag ligger en tur utspridd över flera tabeller i Postgres. `tour_logs` har en 
 
 Mätningar: 
 
-- Storlek på svaret från `/api/tours`: TODO ~268,2kb (274635 bytes)
-- Antal databasfrågor per anrop till `/api/tours`: 
-- Antal rader i `tour_logs`: 5864 rader
-- Antal punkter i största turen: 39 punkter, antalet tour_id totslt: 70 st
+- Storlek på svaret från `/api/tours`: ~268,2kb (274635 bytes)
+- Antal databasfrågor per anrop till `/api/tours`: 745 frågor 
+  - 1 listfråga som hämtar alla 200 turer + 744 för relaterad info per tur
+  - N+1-problem: fler turer ger fler frågor.
+- Antal rader i `tour_logs`: 5802 rader
+- Antal punkter i största turen: tour_id: 80, antal punkter: 39 st
 - Antal turer totalt: 200 turer
 
-I helhet blir storleken på dokumentet 4,4 kb (4491 bytes). 
-
-Den gör för många databas förfrågningar.
-TODO: en mening om vilken skuld detta betalar av, enligt kursens formulering.
+Att hantera detta (dvs skuld nummer 13: bulk-hämtning i /api/tours) skulle betala av prestandaskulden som N+1-frågorna skapar.
 
 ## Dokumentmodellen för turer
 
