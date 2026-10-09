@@ -67,3 +67,8 @@ Förutom det uppenbara att projektet ska göras i VUE så har vi hittat:
     Var: button.jsx (inline style), PrimaryButton.jsx (klasskomponent + css-klass), Login.jsx:29 (className direkt)
     Varför det är ett problem: Tre parallella sätt att göra samma UI-element gör varje styling-ändring till en sökning i flera filer. PrimaryButton.jsx är dessutom en klasskomponent medan resten av kodbasen använder funktionella komponenter med hooks vilket bryter mönstret i projektet.
     Allvar: Medel
+
+13. Vad: Endpointen hämtar alla turer med 1 fråga och loopar sedan över varje tur. För varje tur körs separata frågor mot photos, tour_logs, users och guides.
+    Var: /api/tours, båda GET anropen på rad 7 och rad 29.
+    Varför det är ett problem: Antalet frågor växer linjärt med antalet turer (2 000 turer ≈ 7 450 frågor). Det ger långsammare svar, högre databasbelastning och sämre skalbarhet, speciellt när datan växer. Svarstiden är i snitt 279 ms (min 244, max 320), 5 mätningar, lokalt, 200 turer.
+    Allvar: Hög
