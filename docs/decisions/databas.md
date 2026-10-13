@@ -84,8 +84,8 @@ Ett JSON-objekt per mätpunkt väger ca 100–130 byte.
 
 ## Vad som stannar i Postgres
 
-| Tabell | Databas | Val | Motivering |
-|---|---|---|
+| Tabell |  Databas | Val | Motivering |
+|---|---|---|---|
 | `users` | PostgreSQL | Stannar | Hanterar inloggning, unik e-post och lösenordshash. Kräver ACID-transaktioner och strikt unikhet. |
 | `guides` | PostgreSQL | Stannar | Redaktionellt innehåll med `body_html`, sökning och egen livscykel. Ändras oberoende av turer. |
 | `photos` | PostgreSQL | Stannar | Innehåller metadata och bildreferenser kopplade till `tour_id`. Ligger kvar i Postgres för oberoende hantering. |
