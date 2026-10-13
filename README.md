@@ -14,15 +14,38 @@ Plattform för friluftsdestinationer. Redaktionella guider, användarnas egna tu
 - Node.js `^22.18.0 || >=24.12.0`
 - Docker Desktop (för Postgres och MongoDB)
 
-## Kom igång
+## Kommandon
+
+Det finns två sätt att köra projektet:
+
+### Alternativ 1: Kör allt i Docker
+Använd detta om du vill köra hela stacken (databaser, API och frontend) i container-miljö.
+
+```bash
+cp api/.env.example api/.env
+docker compose up --build
+npm run seed
+```
+
+### Alternativ 2: Kör endast databaserna i Docker (Utvecklingsläge)
+Använd detta om du vill utveckla kod lokalt och använda `npm run dev`.
 
 ```bash
 npm install
 cp api/.env.example api/.env
-docker compose -f docker-compose.dev.yml up -d
+docker compose up -d postgres mongo
 npm run seed
 npm run dev
 ```
+
+*Obs: När Node-API:et körs lokalt utanför Docker ansluter det via `localhost` (t.ex. `localhost:5432` och `localhost:27017`) eftersom portarna är exporterade.*
+
+Appen ligger sen på:
+- **Web:** http://localhost:3000
+- **Client:** http://localhost:3001
+- **API:** http://localhost:4000
+
+*Obs: När hela applikationen körs i Docker ansluter API:et till databaserna via deras Compose-tjänstnamn (`postgres` respektive `mongo`).*
 
 I PowerShell används `Copy-Item api/.env.example api/.env` för att kopiera miljöfilen. Gör det bara om `api/.env` inte redan finns. API-skripten läser filen automatiskt; miljövariabler som redan är satta har företräde. `.env` är ignorerad av Git. `JWT_SECRET` måste vara satt, medan databasadresserna har lokala standardvärden.
 
@@ -31,8 +54,8 @@ I PowerShell används `Copy-Item api/.env.example api/.env` för att kopiera mil
 Kör från repots rot efter att Docker Desktop har startat:
 
 ```powershell
-docker compose -f docker-compose.dev.yml up -d
-docker compose -f docker-compose.dev.yml ps
+docker compose up -d
+docker compose ps
 npm run mongo:smoke
 ```
 
@@ -43,17 +66,12 @@ Vänta tills MongoDB har startat innan smoke-kommandot körs. Det sparar en demo
 För att öppna Mongo-terminalen för Compose-tjänsten:
 
 ```powershell
-docker compose -f docker-compose.dev.yml exec mongo mongosh -u utpost -p utpost --authenticationDatabase admin
+docker compose exec mongo mongosh -u utpost -p utpost --authenticationDatabase admin
 ```
 
 Skriv sedan `use utpost` och `db.tours.find()` inne i `mongosh`. `exit` tar dig tillbaka till PowerShell.
 
-Om övningscontainern `mongo-test` redan kör på port 27017, stoppa den med `docker stop mongo-test` före Compose-starten. Den behåller sina data. `docker compose -f docker-compose.dev.yml down` stoppar teamrepots databaser och behåller de namngivna volymerna; använd inte `down -v` om du vill behålla data.
-
-Appen ligger sen på:
-- http://localhost:3000 för web
-- http://localhost:3001 för client
-- http://localhost:4000 för API:et
+Om övningscontainern `mongo-test` redan kör på port 27017, stoppa den med `docker stop mongo-test` före Compose-starten. Den behåller sina data. `docker compose down` stoppar teamrepots databaser och behåller de namngivna volymerna; använd inte `down -v` om du vill behålla data.
 
 ## Kommandon
 
