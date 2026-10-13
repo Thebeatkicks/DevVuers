@@ -38,7 +38,7 @@ npm run seed
 npm run dev
 ```
 
-*Obs: När Node-API:et körs lokalt utanför Docker ansluter det via `localhost` (t.ex. `localhost:5432` och `localhost:27017`) eftersom portarna är exporterade.*
+*Obs: När Node-API:et körs lokalt utanför Docker ansluter det via `localhost` (`localhost:5433` för Postgres och `localhost:27017` för MongoDB) eftersom portarna är exporterade.*
 
 Appen ligger sen på:
 - **Web:** http://localhost:3000
