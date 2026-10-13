@@ -1,12 +1,9 @@
 # Beslutsdokument: databasval
 
-**Datum:** 2026-10-08
+**Datum dokumentet skrevs:** 2026-10-08
+**Datum beslutet togs:** 2026-10-13
 **Status:** Beslutad (Team DevVuers)  
-**Beslut:** UTKAST, ska beslutas av teamet. Förslag: turer och deras mätpunkter ligger i MongoDB som ett dokument per tur. Guider, användare och foton stannar i Postgres. Gränsen går där data växer med varje tur och alltid läses ihop med den (mätpunkterna), medan resten har egna relationer och ändras oberoende av turen.
-
-TODO:tas beslut
-
-text: Turer och deras mätpunkter (`points`) flyttas till MongoDB som ett inbäddat dokument per tur. Guider, användare och foton stannar kvar i PostgreSQL.
+**Beslut:** Turer och deras mätpunkter (`points`) flyttas till MongoDB som ett inbäddat dokument per tur. Guider, användare och foton stannar kvar i PostgreSQL.
 
 ## Bakgrund
 
@@ -96,8 +93,6 @@ Ett JSON-objekt per mätpunkt väger ca 100–130 byte.
 
 ## Så här ska migreringen gå till (genomförs i M5)
 
-TODO: teamet bekräftar stegen. Förslag:
-
 1. **Migreringsskript:** Ett Node.js-skript läser alla turer och tillhörande `tour_logs` ur PostgreSQL, beräknar aggregerade fält (`point_count`, etc.), bygger MongoDB-dokument och skriver dem till MongoDB.
 2. **API-omkoppling:** `/api/tours` ändras till att läsa från MongoDB. API-kontraktet (JSON-responsen) behålls identiskt så att frontend fungerar utan ändringar.
 3. **Datavalidering:** Antal turer och punkter verifieras automatiskt mellan databaserna, följt av stickprovskontroll av koordinater och statistik.
@@ -122,6 +117,7 @@ Vi valde att gå vidare med hybridmodellen. Trots att lösningen medför högre 
 Lösningen eliminerar vårt prestandaproblem (N+1-frågor) och ger en datamodell som passar inbäddad tur- och kartdata naturligt. Utöver de tekniska vinsterna ger detta stor pedagogisk nytta för vår läroprocess kring *polyglot persistence* (att använda flera databasteknologier i samma system) — ett mönster som återspeglar hur större företag bygger moderna och skalbara applikationer i industrin.
 
 ## Konsekvenser
+
 - **Drift:** Två databashanterare körs parallellt.
 - **Miljövariabler:** Två anslutningar krävs: DATABASE_URL (PostgreSQL) och MONGO_URL (MongoDB).
 - **Docker Compose:** En mongo:8.2-tjänst inkluderas i `compose.yml`.
@@ -130,6 +126,7 @@ Lösningen eliminerar vårt prestandaproblem (N+1-frågor) och ger en datamodell
 - **Datakonsistens:** `user_id` och `guide_id` i MongoDB pekar på ID:n i PostgreSQL. Referensintegritet valideras på applikationsnivå i API-skiktet.
 
 ## Signaturer / Godkännande
+
 Beslutat och signerat av Team DevVuers:
 Sheyma – Utvecklare / Teammedlem
 Yasmin – Utvecklare / Teammedlem
