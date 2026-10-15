@@ -5,13 +5,17 @@ import { authRouter } from './routes/auth.js';
 import { guidesRouter } from "./routes/guides.ts";
 import { toursRouter } from './routes/tours.js';
 import { photosRouter } from './routes/photos.js';
-
 import { mongo } from './db/mongo.js';
 import { pool } from './db/client.js';
+import { yoga } from './graphql/server.js';
 
 const app = express();
 
 app.use(cors());
+
+// GraphQL (M4): en endpoint bredvid REST-routerna. Ligger före express.json() – yoga läser sin egen body.
+app.use(yoga.graphqlEndpoint, yoga);
+
 app.use(express.json({ limit: '50mb' }));
 
 //app.get('/api/health', (req, res) => res.json({ ok: true, version: '1.4.2' }));
