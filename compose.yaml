@@ -52,7 +52,7 @@ services:
       context: .
       dockerfile: client/Dockerfile
     ports:
-      - "3001:3001"
+      - "3001:80" # nginx lyssnar på 80 i containern
     depends_on:
       - api
 volumes:

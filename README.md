@@ -107,3 +107,11 @@ Inte aktuellt än.
 
 ## Skuld
 Se docs/debt.md för hela listan av alla funna skulder.
+
+
+## Mätningar M4
+
+Image	Före (steg 0)	Efter (steg 1)	Kommentar
+utpost-image-…-client	567 MB	73.8 MB	före: Node + node_modules + dist · efter: nginx + dist
+utpost-image-…-api	287 MB	______ MB	en stage, ska inte ändras
+nginx:1.27-alpine (basen)	–	______ MB	syns i listan bara om ni hämtat den med docker pull nginx:1.27-alpine
