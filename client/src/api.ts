@@ -1,20 +1,22 @@
-const API_URL = "http://localhost:4000/api";
+// Relativ adress: browsern frågar samma server som skickade sidan. I containern är det nginx
+// (client/nginx.conf), i utveckling Vites dev-server (proxy i vite.config.js). Båda skickar vidare till API:et.
+export const API_URL = "/api";
 
-export async function get<T>(path: string): Promise<T> {
-  const response = await fetch(`${API_URL}${path}`);
-  if (!response.ok) throw new Error(`API-fel: ${response.status}`);
-  return (await response.json()) as T;
-}
+// Generisk: anroparen säger vilken typ svaret har – `get<Guide[]>('/guides')`.
+// Typen kommer från @utpost/shared, samma fil som API:et använder.
+export const get = async <T>(path: string): Promise<T> => {
+  const res = await fetch(`${API_URL}${path}`);
+  if (!res.ok) throw new Error(`API svarade ${res.status}`);
+  return res.json() as Promise<T>;
+};
 
-export async function post<TResponse, TBody = unknown>(
-  path: string,
-  body: TBody,
-): Promise<TResponse> {
-  const response = await fetch(`${API_URL}${path}`, {
+// Används av inloggningen (Pinia-storen). Svarar med JSON även vid 401 – API:et skickar
+// { error: '...' } då, och storen läser det. Kastar bara när svaret inte är JSON alls.
+export const post = async <T>(path: string, body: unknown): Promise<T> => {
+  const res = await fetch(`${API_URL}${path}`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(body),
   });
-  if (!response.ok) throw new Error(`API-fel: ${response.status}`);
-  return (await response.json()) as TResponse;
-}
+  return res.json() as Promise<T>;
+};
