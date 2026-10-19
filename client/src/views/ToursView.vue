@@ -1,10 +1,41 @@
-<script setup>
+<script setup lang="ts">
 import { RouterLink } from "vue-router";
 import { onMounted, ref, computed } from "vue";
+import { gql } from "../graphql";
 
-const tours = ref([]);
+type ToursData = {
+  tours: {
+    id: string;
+    title: string;
+    distanceM: number;
+    user: { displayName: string };
+    guide: { title: string } | null;
+    photos: { id: string }[];
+  }[];
+};
+
+const TOURS_QUERY = /* GraphQL */ `
+  query Tours($limit: Int) {
+    tours(limit: $limit) {
+      id
+      title
+      distanceM
+      user {
+        displayName
+      }
+      guide {
+        title
+      }
+      photos {
+        id
+      }
+    }
+  }
+`;
+
+const tours = ref<ToursData["tours"]>([]);
 const loading = ref(true);
-const errorParagraph = ref(null);
+const errorParagraph = ref<string | null>(null);
 
 onMounted(() => {
   fetchTours();
@@ -12,9 +43,8 @@ onMounted(() => {
 
 const fetchTours = async () => {
   try {
-    const response = await fetch("http://localhost:4000/api/tours");
-    const data = await response.json();
-    tours.value = data;
+    const data = await gql<ToursData>(TOURS_QUERY, { limit: 50 });
+    tours.value = data.tours;
   } catch (error) {
     console.error("Kunde inte hämta tours informationen", error);
     errorParagraph.value = "Kunde inte ladda turer.";
@@ -27,9 +57,9 @@ const tourRows = computed(() =>
   tours.value.map((tour) => ({
     id: tour.id,
     title: tour.title,
-    author: tour.user?.display_name ?? "-",
+    author: tour.user?.displayName ?? "-",
     guide: tour.guide?.title ?? "-",
-    km: Math.round(tour.distance_m / 100) / 10,
+    km: Math.round(tour.distanceM / 100) / 10,
     photoCount: tour.photos.length,
   })),
 );
