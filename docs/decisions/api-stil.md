@@ -1,7 +1,7 @@
 # Beslut: API-stil för [vyn ni valt] (REST vs GraphQL)
 
 **Status:** Förslag
-**Datum:** 2026-10-16
+**Datum:** 2026-10-20
 **Deltagare:** Henrik, Ella, Yasmin och Sheyma.
 
 ## Kontext
@@ -115,6 +115,22 @@ GuidesView behåller REST och används som kontrollgrupp. Vi behåller både RES
 
 N+1 åtgärdas med DataLoader innan fler vyer byggs på GraphQL.
 
+### Alternativ som jämfördes
+1. **Alternativ 1: Fortsatt ren REST-arkitektur.** 
+Kräver refaktorering av endpoints med query-parametrar för fältfiltrering och specialanpassade DTO:er för att lösa over-fetching och N+1.
+2. **Alternativ 2: Hybridarkitektur (REST + GraphQL) [VALT ALTERNATIV].** 
+GraphQL införs för dataintensiva och sammansatta vyer (`ToursView`), medan enkel/statisk data och autentisering stannar i REST.
+3. **Alternativ 3: Fullständig migrering till GraphQL.** 
+Allt flyttas till GraphQL, inklusive autentisering och filuppladdningar.
+
+### Uppdelning endpoint för endpoint
+
+| Endpoint / Resurs | API-stil | Motivering / Varför? |
+| :--- | :--- | :--- |
+| `/graphql` (`tours`, `tour`) | **GraphQL** | `ToursView` kräver relational data (tour, user, guide, photos). GraphQL minskar datamängden från 296 kB till 7 kB (98% minskning) och eliminerar over-fetching av oanvända loggar. |
+| `/api/guides` | **REST** | Används som kontrollgrupp i M4. Svaren är mindre kritiska och vyn gör få anrop. |
+| `/api/auth/*` (login, register) | **REST** | Standardiserad HTTP-statuskodshantering, sessionshantering och JWT-utställande fungerar bäst och säkrast över ren REST. |
+
 ## Konsekvenser
 - Positivt:
     - Mycket mindre svar: tours från 293 kB till 7 kB (ca 97 %)
@@ -127,9 +143,14 @@ N+1 åtgärdas med DataLoader innan fler vyer byggs på GraphQL.
     - HTTP-cachning är svårare med POST till /graphql än med GET på REST.
     - Resolvers måste skrivas om när tours flyttas till MongoDB.
     - Två API-stilar (REST och GraphQL) underhålls parallellt.
+    - GraphQL returnerar nästan alltid HTTP `200 OK` även när ett exekveringsfel uppstår i backend gentemot REST som använder HTTP-statuskoder. Klienten måste manuellt kontrollera `response.errors`.
 - Nästa steg:
     1. Införa DataLoader för user, guide och photos, och mäta om (förväntat ca 4 frågor).
     2. Välja kolumner i SQL utifrån begärda fält i stället för select *.
     3. Ta bort password_hash från REST-svaret och byta till bcrypt.
     4. Migrera tours till MongoDB och köra om mätningen. Guides-siffrorna ska vara oförändrade och fungera som kontroll.
     5. Efter migreringen till MongoDB: utvärdera om fler vyer ska flytta till GraphQL. Använd samma mätmetod.
+
+---
+**Skrivet och signerat av:**
+Henrik, Ella, Yasmin och Sheyma (2026-10-20)
