@@ -4,7 +4,7 @@ Plattform för friluftsdestinationer. Redaktionella guider, användarnas egna tu
 
 ## Struktur
 
-- `api/` – Express + Postgres (Drizzle)
+- `api/` – Express + Postgres (Drizzle) + GraphQL (Yoga)
 - `web/` – React + Vite
 - `client/` – Vue 3 + Vite
 - `shared/` – TypeScript-typer för det API:et svarar med @utpost/shared: Guide, Tour, TourLog, User och ApiError. Fälten heter som i svaret snake_case. Används av både api/ och client/. Ändras ett svar ändras typen, i samma PR
@@ -44,6 +44,7 @@ Appen ligger sen på:
 - **Web:** http://localhost:3000
 - **Client:** http://localhost:3001
 - **API:** http://localhost:4000
+- **GraphQL:** http://localhost:4000/graphql (nås också via client på http://localhost:3001/graphql, som skickar vidare till API:et)
 
 *Obs: När hela applikationen körs i Docker ansluter API:et till databaserna via deras Compose-tjänstnamn (`postgres` respektive `mongo`).*
 
@@ -111,7 +112,12 @@ Se docs/debt.md för hela listan av alla funna skulder.
 
 ## Mätningar M4
 
-Image	Före (steg 0)	Efter (steg 1)	Kommentar
-utpost-image-…-client	567 MB	73.8 MB	före: Node + node_modules + dist · efter: nginx + dist
-utpost-image-…-api	287 MB	______ MB	en stage, ska inte ändras
-nginx:1.27-alpine (basen)	–	______ MB	syns i listan bara om ni hämtat den med docker pull nginx:1.27-alpine
+Storlekarna är kolumnen Disk usage i `docker image ls`.
+
+| Image | Före (steg 0) | Efter (steg 1) | Kommentar |
+|---|---:|---:|---|
+| `utpost-image-…-client` | 567 MB | 73,8 MB | före: Node + node_modules + dist · efter: nginx + dist |
+| `utpost-image-…-api` | 287 MB | 287 MB | en stage, ska inte ändras |
+| `nginx:1.27-alpine` (basen) | – | 74,5 MB | syns i listan bara om man hämtat den med `docker pull nginx:1.27-alpine` |
+
+Klient-imagen (73,8 MB) är nästan lika stor som basimagen nginx:1.27-alpine (74,5 MB). `docker history utpost-client` visar att den bara lägger till 168 kB (`dist/`) och 20,5 kB (`nginx.conf`) ovanpå basen, och att inga lager med Node eller `node_modules` finns kvar. Multi-stage-bygget slängde alltså bort byggverktygen och behöll bara de statiska filerna.
