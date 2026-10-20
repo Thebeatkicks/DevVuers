@@ -14,9 +14,7 @@ const errorParagraph = ref<string | null>(null);
 
 watchEffect(async () => {
   try {
-    const response = await fetch(
-      `http://localhost:4000/api/tours/${String(route.params.id)}`,
-    );
+    const response = await fetch(`/api/tours/${String(route.params.id)}`);
     if (!response.ok) {
       throw new Error(`API svarade ${response.status}`);
     }
