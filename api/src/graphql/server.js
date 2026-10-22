@@ -56,7 +56,7 @@ export const yoga = createYoga({
       user: userFrom(request),
       stats,
       query,
-      loaders: createLoaders(query),
+      loaders: createLoaders(query, stats),
     };
     },
 });
