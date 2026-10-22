@@ -122,6 +122,29 @@ Storlekarna är kolumnen Disk usage i `docker image ls`.
 
 Klient-imagen (73,8 MB) är nästan lika stor som basimagen nginx:1.27-alpine (74,5 MB). `docker history utpost-client` visar att den bara lägger till 168 kB (`dist/`) och 20,5 kB (`nginx.conf`) ovanpå basen, och att inga lager med Node eller `node_modules` finns kvar. Multi-stage-bygget slängde alltså bort byggverktygen och behöll bara de statiska filerna.
 
+### Migrering av turloggar till MongoDB
+
+Migreringen följer M3-modellen med inbäddade `points`.
+Skriptet räknar sparade dokument och faktiska mätpunkter i MongoDB
+och jämför med Postgres. Avvikande antal ger felkod.
+
+Första körningen:
+```text
+MongoDB: 199 nya, 1 ändrade dokument
+Turer: Postgres 200, MongoDB 200
+Mätpunkter: Postgres 5941, MongoDB 5941
+Verifiering OK: antal turer och mätpunkter stämmer
+```
+
+Andra körningen:
+```text
+MongoDB: 0 nya, 200 ändrade dokument
+Turer: Postgres 200, MongoDB 200
+Mätpunkter: Postgres 5941, MongoDB 5941
+Verifiering OK: antal turer och mätpunkter stämmer
+```
+
+Omkörningen skapade inga nya dokument eller extra mätpunkter.
 ## Mätning för/efter (M5)
 Samma fråga kördes före och efter DataLoader. Före-värdet kommer från API-loggen, efter-värdet från `extensions.databasfragor`.
 
