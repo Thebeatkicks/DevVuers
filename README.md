@@ -145,3 +145,9 @@ Verifiering OK: antal turer och mätpunkter stämmer
 ```
 
 Omkörningen skapade inga nya dokument eller extra mätpunkter.
+## Mätning för/efter (M5)
+Samma fråga kördes före och efter DataLoader. Före-värdet kommer från API-loggen, efter-värdet från `extensions.databasfragor`.
+
+| Fråga | Före | Efter |
+|---|---:|---:|
+| `tours(limit: 3) { id title distanceM user { displayName } guide { title } photos { id } }` | 10 | 4 |
