@@ -2,7 +2,7 @@ import { post } from "../api";
 import type { LoginRequest, LoginResponse } from "../../../shared/src/types";
 
 export function login(credentials: LoginRequest): Promise<LoginResponse> {
-  return post<LoginResponse, LoginRequest>("/auth/login", credentials);
+  return post<LoginResponse>("/auth/login", credentials);
 }
 
 export function logout(): Promise<void> {
