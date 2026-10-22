@@ -121,3 +121,10 @@ Storlekarna är kolumnen Disk usage i `docker image ls`.
 | `nginx:1.27-alpine` (basen) | – | 74,5 MB | syns i listan bara om man hämtat den med `docker pull nginx:1.27-alpine` |
 
 Klient-imagen (73,8 MB) är nästan lika stor som basimagen nginx:1.27-alpine (74,5 MB). `docker history utpost-client` visar att den bara lägger till 168 kB (`dist/`) och 20,5 kB (`nginx.conf`) ovanpå basen, och att inga lager med Node eller `node_modules` finns kvar. Multi-stage-bygget slängde alltså bort byggverktygen och behöll bara de statiska filerna.
+
+## Mätning för/efter (M5)
+Samma fråga kördes före och efter DataLoader. Före-värdet kommer från API-loggen, efter-värdet från `extensions.databasfragor`.
+
+| Fråga | Före | Efter |
+|---|---:|---:|
+| `tours(limit: 3) { id title distanceM user { displayName } guide { title } photos { id } }` | 10 | 4 |

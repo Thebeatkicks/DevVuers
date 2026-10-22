@@ -5,7 +5,7 @@ import { config } from '../config.js';
 import { pool } from '../db/client.js';
 import { typeDefs } from './schema.js';
 import { resolvers } from './resolvers.js';
-
+import { createLoaders } from './loaders.js';
 // Samma token som REST-routerna använder (lib/auth.js). Ingen token = user är null;
 // det är varje resolvers sak att avgöra om det räcker.
 const userFrom = (request) => {
@@ -21,9 +21,19 @@ const userFrom = (request) => {
 // Skriver en rad per anrop: hur många databasfrågor den här GraphQL-frågan kostade.
 const logQueryCount = {
   onExecute: ({ args }) => ({
-    onExecuteDone: () => {
+    onExecuteDone: ({ result, setResult }) => {
+      const databasfragor = args.contextValue.stats.queries;
       const name = getOperationAST(args.document, args.operationName)?.name?.value ?? 'anonym';
-      console.log(`graphql ${name}: ${args.contextValue.stats.queries} databasfrågor`);
+
+      console.log(`graphql ${name}: ${databasfragor} databasfrågor`);
+
+      setResult({
+        ...result,
+        extensions: {
+          ...result.extensions,
+          databasfragor,
+        },
+      });
     },
   }),
 };
@@ -35,14 +45,18 @@ export const yoga = createYoga({
   plugins: [logQueryCount],
   // context byggs en gång per anrop och skickas till varje resolver som tredje argument.
   context: ({ request }) => {
+    
     const stats = { queries: 0 };
+    const query = (sql, params) => {
+      stats.queries += 1;
+      return pool.query(sql, params);
+    };
+
     return {
       user: userFrom(request),
       stats,
-      query: (sql, params) => {
-        stats.queries += 1;
-        return pool.query(sql, params);
-      },
+      query,
+      loaders: createLoaders(query),
     };
-  },
+    },
 });
