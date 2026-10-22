@@ -15,7 +15,8 @@
     "format": "npm run format --workspace=client",
     "test": "npm run test --workspace=client && npm run test --workspace=api",
     "typecheck": "npm run typecheck --workspace=shared && npm run typecheck --workspace=api",
-    "build": "npm run build --workspace=web && npm run build --workspace=client"
+    "build": "npm run build --workspace=web && npm run build --workspace=client",
+    "migrate:logs": "npm run migrate:logs --workspace=api"
   },
   "devDependencies": {
     "concurrently": "^9.1.2"
