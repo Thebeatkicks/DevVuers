@@ -12,7 +12,7 @@ export default defineConfig([
     files: ['**/*.{vue,js,mjs,jsx,ts}'],
   },
 
-  globalIgnores(['**/dist/**', '**/dist-ssr/**', '**/coverage/**']),
+  globalIgnores(['**/dist/**', '**/dist-ssr/**', '**/coverage/**', 'src/gql/**']),
 
   {
     languageOptions: {

@@ -14,7 +14,7 @@
     "format:check": "npm run format:check --workspace=client",
     "format": "npm run format --workspace=client",
     "test": "npm run test --workspace=client && npm run test --workspace=api",
-    "typecheck": "npm run typecheck --workspace=shared && npm run typecheck --workspace=api",
+    "typecheck": "npm run typecheck --workspace=shared && npm run typecheck --workspace=api && npm run typecheck --workspace=client",
     "build": "npm run build --workspace=web && npm run build --workspace=client",
     "migrate:logs": "npm run migrate:logs --workspace=api"
   },

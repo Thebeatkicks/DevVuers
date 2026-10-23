@@ -1,12 +1,20 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import "@testing-library/jest-dom/vitest";
 import { render, screen } from "@testing-library/vue";
+import urql, { cacheExchange, fetchExchange } from "@urql/vue";
 import ToursView from "./ToursView.vue";
 
 const mockedFetch = vi.fn();
 
+// urql läser content-type och svarstexten, inte bara json(), så mock-svaret måste ha båda.
 const respondWith = (data: unknown, ok = true, status = 200) =>
-  ({ ok, status, json: async () => data }) as Response;
+  ({
+    ok,
+    status,
+    headers: new Headers({ "content-type": "application/json" }),
+    json: async () => data,
+    text: async () => JSON.stringify(data),
+  }) as Response;
 
 const stubs = {
   RouterLink: {
@@ -14,6 +22,17 @@ const stubs = {
     template: '<a :href="to"><slot /></a>',
   },
 };
+
+// Samma klient som main.js skapar, men ny för varje render så att cachen inte läcker mellan tester.
+const renderView = () =>
+  render(ToursView, {
+    global: {
+      stubs,
+      plugins: [
+        [urql, { url: "/graphql", exchanges: [cacheExchange, fetchExchange] }],
+      ],
+    },
+  });
 
 describe("ToursView", () => {
   beforeEach(() => {
@@ -45,7 +64,7 @@ describe("ToursView", () => {
       }),
     );
 
-    render(ToursView, { global: { stubs } });
+    renderView();
 
     expect(
       await screen.findByRole("link", { name: "Kebnekaise runt" }),
@@ -55,15 +74,15 @@ describe("ToursView", () => {
     expect(screen.getByText("12.3 km")).toBeInTheDocument();
     expect(screen.getByText("2")).toBeInTheDocument();
 
-    // Hela vyn hämtas med ett enda anrop till /graphql
+    // Hela vyn hämtas med ett enda anrop till /graphql (urql lägger frågan i URL:en vid GET)
     expect(mockedFetch).toHaveBeenCalledTimes(1);
-    expect(mockedFetch.mock.calls[0]![0]).toBe("/graphql");
+    expect(String(mockedFetch.mock.calls[0]![0])).toMatch(/^\/graphql(\?|$)/);
   });
 
   it("visar ett fel när det inte går att hämta turerna", async () => {
     mockedFetch.mockRejectedValue(new Error("Nätverksfel"));
 
-    render(ToursView, { global: { stubs } });
+    renderView();
 
     expect(
       await screen.findByText("Kunde inte ladda turer."),
@@ -75,7 +94,7 @@ describe("ToursView", () => {
       respondWith({ errors: [{ message: "Unexpected error." }] }),
     );
 
-    render(ToursView, { global: { stubs } });
+    renderView();
 
     expect(
       await screen.findByText("Kunde inte ladda turer."),
