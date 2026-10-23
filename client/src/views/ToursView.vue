@@ -1,20 +1,13 @@
 <script setup lang="ts">
 import { RouterLink } from "vue-router";
-import { onMounted, ref, computed } from "vue";
-import { gql } from "../graphql";
+import { computed } from "vue";
+import { useQuery } from "@urql/vue";
+import { graphql } from "@/gql";
 
-type ToursData = {
-  tours: {
-    id: string;
-    title: string;
-    distanceM: number;
-    user: { displayName: string };
-    guide: { title: string } | null;
-    photos: { id: string }[];
-  }[];
-};
-
-const TOURS_QUERY = /* GraphQL */ `
+//Borta: ToursData-typen, TOURS_QUERY, ref-variablerna, onMounted, fetchTours, console.error och importen av gql från ../graphql.
+// urql och codegen tar över allt det.
+//Nytt: useQuery med graphql() från @/gql. Typen på data kommer från schemat, så det finns inget att skriva för hand.
+const ToursQuery = graphql(`
   query Tours($limit: Int) {
     tours(limit: $limit) {
       id
@@ -31,33 +24,18 @@ const TOURS_QUERY = /* GraphQL */ `
       }
     }
   }
-`;
+`);
 
-const tours = ref<ToursData["tours"]>([]);
-const loading = ref(true);
-const errorParagraph = ref<string | null>(null);
-
-onMounted(() => {
-  fetchTours();
+const { data, fetching, error } = useQuery({
+  query: ToursQuery,
+  variables: { limit: 50 },
 });
 
-const fetchTours = async () => {
-  try {
-    const data = await gql<ToursData>(TOURS_QUERY, { limit: 50 });
-    tours.value = data.tours;
-  } catch (error) {
-    console.error("Kunde inte hämta tours informationen", error);
-    errorParagraph.value = "Kunde inte ladda turer.";
-  } finally {
-    loading.value = false;
-  }
-};
-
 const tourRows = computed(() =>
-  tours.value.map((tour) => ({
+  (data.value?.tours ?? []).map((tour) => ({
     id: tour.id,
     title: tour.title,
-    author: tour.user?.displayName ?? "-",
+    author: tour.user.displayName,
     guide: tour.guide?.title ?? "-",
     km: Math.round(tour.distanceM / 100) / 10,
     photoCount: tour.photos.length,
@@ -69,8 +47,8 @@ const tourRows = computed(() =>
   <div>
     <h1>Turer</h1>
 
-    <p v-if="loading">Laddar turer...</p>
-    <p v-else-if="errorParagraph">{{ errorParagraph }}</p>
+    <p v-if="fetching">Laddar turer...</p>
+    <p v-else-if="error">Kunde inte ladda turer.</p>
 
     <table v-else class="tours">
       <thead>
