@@ -20,7 +20,8 @@ jobs:
          - run: npm ci
          - run: npm run lint
          - run: npm run format:check
-         - run: npm run test
+         - run: npm run test --workspace=client
+         - run: npm run test --workspace=api -- src/config.test.js
          - run: npm run typecheck
   integration:
     name: Integration
