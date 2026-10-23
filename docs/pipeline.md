@@ -24,6 +24,33 @@ flowchart LR
 
 # CI/CD-pipeline
 
+## Pipeline i M5
+
+Workflowen körs på pull requests och push till main.
+
+| Jobb | Innehåll |
+|---|---|
+| Kvalitet | Lint, formatering, klienttester, API-konfigurationstester och typkontroll. Klientens typkontroll kör codegen före vue-tsc. |
+| Bygg | Bygger applikationen och sparar client/dist som artifact. |
+| Integration | Startar Postgres och MongoDB, installerar beroenden, seedar, migrerar och kör API-testerna. |
+| Image | Bygger containerbilder. På main publiceras bilderna till GHCR. |
+
+Integration kör följande i ordning:
+
+1. npm ci
+2. npm run seed
+3. npm run migrate:logs
+4. npm run test:api
+
+Databaserna nås via localhost:5432 och localhost:27017.
+DATABASE_URL, MONGO_URL och en JWT_SECRET för tester sätts
+på jobbnivå. Den lokala .env-filen finns inte i CI.
+
+## Mergekrav
+
+En annan teammedlem ska godkänna PR:en.
+
+
 Pipelinen körs på varje pull request mot `main` och på varje push till `main`.
 - Kräver status checks **Kvalitet**, **Bygg**, **Integration** och **Image** gröna innan merge
 - **Integration rött men testerna gröna lokalt:** databasen i jobbet är tom tills `npm run seed` körts, och `Tour.logs` läser Mongo – `npm run migrate:logs` måste också ha körts. Portarna är `5432`/`27017` på `localhost` i jobbet, inte `5433` som i compose.

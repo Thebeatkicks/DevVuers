@@ -144,10 +144,70 @@ Mätpunkter: Postgres 5941, MongoDB 5941
 Verifiering OK: antal turer och mätpunkter stämmer
 ```
 
-Omkörningen skapade inga nya dokument eller extra mätpunkter.
-## Mätning för/efter (M5)
-Samma fråga kördes före och efter DataLoader. Före-värdet kommer från API-loggen, efter-värdet från `extensions.databasfragor`.
+## Mätning före/efter (M5)
 
-| Fråga | Före | Efter |
+### DataLoader
+
+Samma fråga kördes före och efter införandet av DataLoader:
+
+```graphql
+query TurerM5 {
+  tours(limit: 3) {
+    id
+    title
+    distanceM
+    user { displayName }
+    guide { title }
+    photos { id }
+  }
+}
+```
+
+| Mätning | Före | Efter |
 |---|---:|---:|
-| `tours(limit: 3) { id title distanceM user { displayName } guide { title } photos { id } }` | 10 | 4 |
+| Antal databasfrågor | 10 | 4 |
+
+Före-värdet lästes ur API-loggen. Efter-värdet visas i
+`extensions.databasfragor`.
+
+Loaders skapas per anrop. Relationshämtningarna batchas så att
+antalet databasfrågor inte ökar med en fråga per tur.
+
+### Migrering till MongoDB
+
+Migreringen följer M3-beslutet: ett dokument per tur med
+inbäddade `points` och förberäknad statistik.
+
+Skriptet verifierar antal dokument och faktiska mätpunkter i
+MongoDB mot Postgres. Avvikande antal ger felkod.
+
+| Körning | Nya dokument | Turer i Postgres/Mongo | Punkter i Postgres/Mongo |
+|---|---:|---:|---:|
+| Första | 199 | 200 / 200 | 5 941 / 5 941 |
+| Andra | 0 | 200 / 200 | 5 941 / 5 941 |
+
+Båda körningarna gav:
+`Verifiering OK: antal turer och mätpunkter stämmer`.
+
+Behåll även de fullständiga utskrifterna från båda körningarna här.
+
+### GraphQL läser mätpunkter från MongoDB
+
+`KontrolleraMongoBatch` hämtade tre turer med 32, 20 och 32
+mätpunkter utan GraphQL-fel.
+
+`extensions.databasfragor` var 2: en Postgres-fråga för
+turlistan och en batchad Mongo-fråga för mätpunkterna.
+
+### Integrationstester
+
+API:et har 6 integrationstester och 4 konfigurationstester.
+Samtliga passerade i CI på main.
+
+Integrationstesterna täcker turlistan, N+1, saknad guide,
+ogiltigt GraphQL-fält, mutation med och utan inloggning
+samt läsning av mätpunkter från MongoDB.
+
+Grön körning:
+https://github.com/Thebeatkicks/DevVuers/actions/runs/39934692464
+
