@@ -182,7 +182,7 @@ Följande fråga används för den dokumenterade mätningen med tre turer:
 
 ```graphql
 query TurerM5 {
-  tours(limit: 3) {
+  tours {
     id
     title
     distanceM
@@ -199,10 +199,6 @@ query TurerM5 {
 
 Före-värdet kommer från API-loggen. Efter-värdet visas i
 `extensions.databasfragor`.
-
-TODO: komplettera med frågans namn, innehåll och verkliga
-före/efter-siffror för teamets tyngsta fråga om den skiljer sig
-från mätningen ovan. Ett saknat före-värde får inte uppskattas.
 
 ### Migrering till MongoDB
 
