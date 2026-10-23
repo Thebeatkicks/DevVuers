@@ -56,6 +56,7 @@ jobs:
       # Samma variabler som compose sätter för api – men här är databaserna på localhost.
       DATABASE_URL: postgres://utpost:utpost@localhost:5432/utpost
       MONGO_URL: mongodb://utpost:utpost@localhost:27017/utpost?authSource=admin
+      JWT_SECRET: ci-only-test-key-not-for-production
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
