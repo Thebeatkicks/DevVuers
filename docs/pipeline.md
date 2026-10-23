@@ -138,12 +138,10 @@ Tider varierar mellan körningar och ska kopplas till en viss körning.
 
 ### Bevis att röd Integration blockerar merge
 
-TODO: dokumentera verifieringen med länk eller skärmbild.
-
-- Test-PR: [länk].
-- Misslyckad obligatorisk check: Integration.
-- GitHubs merge-status: [observerat resultat].
-- Test-PR stängd utan merge: [ja/nej].
+Test-PR: #83.
+Integration: röd, övriga tre jobb: gröna.
+Observerad merge-status: BLOCKED; även review saknades.
+Test-PR stängd utan merge: ja.
 
 En tillfällig test-PR finns som #83. Kontrollera resultat och
 status innan den används som färdigt bevis. Den ska inte mergas.
