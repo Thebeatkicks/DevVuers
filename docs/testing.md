@@ -1,59 +1,262 @@
 # Teststrategi för Utpost
 
-Detta är ett förslag som gruppen ska besluta om nästa gång vi ses. 
+Uppdaterad för M5, 23 oktober 2026.
 
-## Beslut och bakgrund
+## Inriktning och bakgrund
 
+Vi testar beräkningar, användarbeteenden och API:ets data
+och behörighet.
 
-Vi prioriterar automatiserade tester för beräkningar, användarbeteenden och API:ets data och behörighet. 
+Utpost har en Vue-klient, en äldre React-klient och ett
+Express-/GraphQL-API med Postgres och MongoDB.
 
-Utpost har en Vue-klient, en React-klient och ett Express-API med Postgres. 
-Vi bygger främst tester för Vue-klienten och backend. React-klienten ska fasas ut.
+Automatiserade tester fokuserar på Vue-klienten och API:et.
+React-klienten är inte täckt av de testsviter som beskrivs här.
 
-## Nivåer och testkarta
+## Testnivåer
 
-Vi använder Vitest för enhetstester och Vue Testing Library för komponenttester utifrån vad användaren ser och gör. 
+### Enhetstester
 
-Nästa nivå är att testa API och Databas. Samt end to end tester. 
-- **API (M5):** integrationstester mot GraphQL-servern med riktig databas – lokalt mot compose-databaserna, i pipelinen mot services. Ingen port, ingen mock: `yoga.fetch()` får samma request som browsern skickar.
+Vitest används för ren logik och konfiguration:
 
-| GraphQL-API:et (`api/src/graphql/`) | integration | resolvers mot riktig databas: N+1-regression, inloggningskrav, fel med 200, migreringen av loggar | ja, 6 st (M5) |
+- Beräkningar för turer.
+- Läsning av miljövariabler.
+- Kravet på JWT_SECRET.
 
+Konfigurationstesterna styr miljövariabler med `vi.stubEnv`
+och laddar om konfigurationsmodulen mellan testfallen.
 
-## Testkarta 
-Här ser du vilka tester vi har samt vilka tester vi eventuellt planerar att göra. 
+### Komponenttester
 
-| Kod | Vad testas? | Nivå och testplats | Status |
-| --- | --- | --- | --- |
-| `client/src/lib/tours.ts` | Stigningar, tom lista och saknade höjder | Enhet: `client/src/lib/tours.test.ts` | Finns, 3 testfall |
-| `client/src/views/GuidesView.vue` | Guidelista, sökning, inga träffar och API-fel | Komponent: `client/src/views/GuidesView.test.ts` | Finns, 4 testfall |
-| `api/src/config.js` | JWT-hemlighet från miljön; saknad hemlighet ger fel | Enhet: `api/src/config.test.js` | Finns, 2 testfall |
-| `client/src/views/TourDetail.vue` | Saknad höjd hoppas över, saknad höjd/puls visas som streck och HTTP 500 ger felmeddelande | Komponent: `client/src/views/TourDetail.test.ts` | Finns, 2 testfall |
-| `client/src/views/ToursView.vue` | Turuppgifter, detaljlänk och fel vid nätverksproblem | Komponent: `client/src/views/ToursView.test.ts` | Finns på `test/ToursView`, ännu inte mergat |
-| `client/src/api.ts` | GET/POST, JSON och fel vid HTTP-fel | Enhet, bredvid modulen | Planerat |
-| `client/src/stores/session.ts` | Inloggning, fel, laddningsstatus och utloggning | Enhet, bredvid store | Planerat |
-| `client/src/views/LoginView.vue` | Formulärdata och navigering efter lyckad inloggning | Komponent, bredvid vyn | Planerat |
-| `api/src/lib/auth.js` | Giltig token godtas; saknad eller ogiltig token ger 401 | Enhet, bredvid modulen | Planerat |
-| `api/src/routes/tours.js` | Turdetaljer, 404 och skapande med rätt användare | API-integration, separat testdatabas | Planerat |
-| `api/src/routes/guides.ts` | Sökning och guidehämtning, inklusive saknad slug | API-integration, separat testdatabas | Planerat |
+Vue Testing Library används för att kontrollera vad användaren
+ser och kan göra:
 
-Nuläget är 4 testfiler med 11 testfall på denna branch och `main`. De 2 testfallen för `ToursView` räknas först in efter merge. Kartan uppdateras när tester tillkommer eller deras omfattning ändras.
+- Visning av guider och turer.
+- Sökning och tomma resultat.
+- Länkar.
+- Felmeddelanden.
+- Hantering av saknade mätvärden.
 
-## Regler
+Datahämtningen mockas så att testerna inte behöver ett riktigt API.
 
-- **Merge:** CI-jobben *Kvalitet* och *Bygg* ska vara gröna, branchen uppdaterad mot `main` och PR:en godkänd av minst en annan teammedlem. CI kör lint och formatkontroll för `client`, tester för `client` och `api`, typkontroll för `shared` och `api` samt bygge av `web` och `client`. Ändrat beteende ska ha relevanta tester eller en motiverad, dokumenterad manuell kontroll.
-- **Buggfix:** Lägg till ett regressionstest som återskapar felet, misslyckas före fixen och lyckas efteråt. Välj den lägsta nivå som fångar felet. 
-- **API-mockning:** Komponenttester mockar API-modulen med `vi.mock`, som i `GuidesView.test.ts`. Vyer med direkta `fetch`-anrop mockar `fetch` med `vi.stubGlobal`, som i `TourDetail.test.ts`. Använd fasta testdata, återställ mockar mellan tester och kontrollera relevanta lyckade svar och fel. API-integrationstester ska använda riktig testdatabas med isolerade testdata för att också fånga SQL-fel.
-- **Täckning:** Målet är att täcka så mycket av projektet som möjligt men med fokus på att nå de mål som är uppsatta i uppgiften. 
+### API-integrationstester
 
-## Vad vi medvetet inte testar
+Testerna i `api/src/graphql/server.test.js` använder
+Vitest och `yoga.fetch()` mot riktiga databaser.
 
-Vi testar inte bibliotek. Gör inga pixeljämförelser eller belastningstester. Manuella tester görs på flöden tills vi har uppgift att skapa end-to-end tester. 
+Kedjan är:
 
-## Alternativ vi jämförde
+GraphQL-request → schema → resolver → DataLoader/databas → GraphQL-svar.
 
-Enbart manuella tester kräver mindre startarbete men ger svagt regressionsskydd. Att automatisera allt genom webbläsaren täcker hela flöden men kräver mer underhåll. Vi väljer främst enhets- och komponenttester, kompletterade med API-integration och manuella flödeskontroller.
+API:et behöver inte lyssna på någon port. Testerna anropar
+Yoga-handlern direkt.
 
-## Konsekvenser
+## Befintliga tester
 
-Vi får snabb återkoppling, men mockade klienttester bevisar inte att klient, API och databas fungerar tillsammans. API-integration och inloggningstester är kvarvarande arbete. `TourDetail.vue` använder nu den testade funktionen `elevationGain`; komponenttestet kontrollerar dessutom att resultatet visas korrekt. 
+| Fil | Innehåll | Antal |
+|---|---|---:|
+| client/src/lib/tours.test.ts | Beräkningar och saknade höjdvärden | 3 |
+| client/src/views/GuidesView.test.ts | Guidelista, sökning, tomt resultat och API-fel | 4 |
+| client/src/views/TourDetail.test.ts | Turdetaljer, saknade mätvärden och API-fel | 2 |
+| client/src/views/ToursView.test.ts | Turuppgifter, nätverksfel och GraphQL-fel | 3 |
+| api/src/config.test.js | Databasadresser och JWT-konfiguration | 4 |
+| api/src/graphql/server.test.js | GraphQL mot riktiga databaser | 6 |
+| **Totalt** | **6 testfiler** | **22** |
+
+API-kommandot kör 10 tester: 6 integrationstester och
+4 konfigurationstester. Endast de 6 integrationstesterna
+räknas mot M5:s krav på minst fem API-integrationstester.
+
+## Integrationstesternas ansvar
+
+1. Turlistan returnerar 50 turer med användare och högst
+   två databasfrågor.
+2. En guide som saknas returnerar null utan GraphQL-fel.
+3. Ett ogiltigt GraphQL-fält ger ett valideringsfel; testet
+   kontrollerar också status 200 för den använda requestformen.
+4. createTour utan token nekas med UNAUTHENTICATED.
+5. createTour med token skapar turen med den inloggade användaren.
+6. Tour.logs returnerar lika många punkter som Postgres innehåller,
+   med två databasfrågor totalt för turen och Mongo-punkterna.
+
+N+1-testet läser `extensions.databasfragor`. Det ska upptäcka
+om `Tour.user` börjar göra en databasfråga per tur igen.
+
+Testet för loggar kontrollerar antal och frågekostnad.
+Det jämför inte varje enskilt mätvärde.
+
+## Lokal körning
+
+Kör från repots rot.
+
+Installera beroenden och starta databaserna:
+
+```bash
+npm ci
+docker compose up -d postgres mongo
+```
+
+API:ets `.env` behöver innehålla JWT_SECRET och rätt
+databasinställningar. API-testkommandot läser filen från
+api-workspacet.
+
+På en tom utvecklingsdatabas:
+
+```bash
+npm run seed
+```
+
+Seedningen tömmer befintliga tabeller och återskapar testdata.
+Kör den endast när befintlig lokal data får ersättas.
+
+Migrera punkterna och kör API-testerna:
+
+```bash
+npm run migrate:logs
+npm run test:api
+```
+
+Kör endast klienttesterna:
+
+```bash
+npm run test --workspace=client
+```
+
+Kör endast API-konfigurationstesterna:
+
+```bash
+npm run test --workspace=api -- src/config.test.js
+```
+
+Kör samtliga befintliga tester:
+
+```bash
+npm test
+```
+
+Samtliga tester kräver att databaserna är redo eftersom
+API-integrationstester ingår.
+
+## Testmiljö och data
+
+Lokalt körs integrationstesterna mot de databaser som anges
+av API:ets miljövariabler. Använd utvecklings-/testdata.
+
+I CI startar jobbet Integration nya Postgres- och Mongo-services.
+Seedning och migrering körs före testerna.
+
+Testfilerna i API:et körs sekventiellt eftersom de delar databas.
+Testtimeout är 10 sekunder.
+
+Testet som skapar en tur raderar turen efter sina assertions.
+Om testet avbryts före städningen kan testdata bli kvar och
+behöva tas om hand före nästa körning.
+
+## GraphQL och Vitest
+
+`api/vitest.config.js` innehåller:
+
+```js
+ssr: {
+  resolve: {
+    conditions: ['module', 'node'],
+  },
+}
+```
+
+Konfigurationen undviker att testkoden och GraphQL Yoga laddar
+olika varianter av GraphQL. Annars kan exempelvis ett avsett
+UNAUTHENTICATED-fel maskeras som INTERNAL_SERVER_ERROR.
+
+## Mockning av klientens datahämtning
+
+Nuvarande klienttester använder mockad API-modul eller fetch.
+ToursView-testet använder en riktig urql-klient med mockad fetch.
+
+M5-komplettering återstår:
+
+- Lägg till test för HomeView.
+- Låt både HomeView- och ToursView-tester mocka `@urql/vue`
+  enligt uppgiften.
+
+Dessa kompletteringar räknas inte som färdiga tester i tabellen ovan.
+
+## Bevis för regressioner
+
+### N+1
+
+TODO:
+
+1. Kör N+1-testet med loadern och spara grönt resultat.
+2. Koppla tillfälligt bort loadern för Tour.user.
+3. Kör igen och spara faktisk felrad och antal databasfrågor.
+4. Återställ loadern och visa att testet blir grönt.
+5. Spara bevisen under Mätning före/efter (M5) i README.
+
+### Schema och klienttyper
+
+Codegen genererar klientens typer från schema och frågor.
+Klientens typkontroll kör codegen före vue-tsc.
+
+TODO: dokumentera att ett borttaget schemafält som används
+av en vy stoppar `npm run typecheck`.
+
+Beviset från PR #81, där ett fält togs bort ur klientfrågan
+men fortfarande användes i vyn, är ett separat test av kedjan.
+
+## Regler för ändringar och merge
+
+- Alla fyra CI-jobb ska vara gröna:
+  Kvalitet, Bygg, Integration och Image.
+- Branchen ska vara uppdaterad mot main.
+- Minst en annan teammedlem ska godkänna PR:en.
+- En buggfix ska ha ett relevant regressionstest när det är möjligt.
+- Testet ska misslyckas när den avsedda buggen finns.
+- Ändrade beteenden ska ha relevant automatiserad verifiering
+  eller en dokumenterad manuell kontroll.
+- Testdata och miljövariabler ska vara tydliga och reproducerbara.
+
+Vi använder meningsfulla beteendekontroller. Vi har inte satt
+ett generellt procentkrav för kodtäckning i den beskrivna pipelinen.
+
+## Kvarvarande testområden
+
+| Område | Status |
+|---|---|
+| HomeView med mockad useQuery | Återstår för M5 |
+| ToursView med mockad @urql/vue | Befintligt test behöver anpassas för M5 |
+| api.ts: HTTP-metoder och felhantering | Planerat |
+| Session-store: inloggning och utloggning | Planerat |
+| LoginView: formulär och navigering | Planerat |
+| REST-auth: giltig, saknad och ogiltig token | Planerat |
+| REST-routes för turer och guider | Planerat |
+| Hela användarflöden i browsern | Manuell verifiering tills vidare |
+
+## Vad testerna inte bevisar
+
+- Mockade klienttester bevisar inte att klienten fungerar
+  tillsammans med ett riktigt API.
+- API-testerna via yoga.fetch verifierar inte nginx eller
+  nätverkstrafik mellan containrar.
+- Antalskontrollen för migreringen bevisar inte ensam att
+  varje fältvärde är identiskt.
+- Tester av frågeantal är inte belastnings- eller responstidstester.
+- Vi gör inga pixeljämförelser och testar inte bibliotekens interna kod.
+
+## Alternativ och konsekvenser
+
+Enbart manuella tester ger långsammare återkoppling och svagare
+skydd mot återkommande fel.
+
+Enbart tester genom browsern skulle täcka fler systemgränser,
+men kräva mer miljöhantering och vara svårare att felsöka.
+
+Vi kombinerar därför enhetstester, komponenttester och
+API-integrationstester med manuella kontroller av hela flöden.
+
+Det ger snabb återkoppling samtidigt som API-testerna upptäcker
+fel som mockade klienttester inte kan se, exempelvis N+1 och
+felaktiga databasfrågor.
+
+Se [pipelinebeskrivningen](pipeline.md) och
+[M5-bevisen i README](../README.md).
