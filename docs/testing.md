@@ -15,6 +15,10 @@ Vi bygger främst tester för Vue-klienten och backend. React-klienten ska fasas
 Vi använder Vitest för enhetstester och Vue Testing Library för komponenttester utifrån vad användaren ser och gör. 
 
 Nästa nivå är att testa API och Databas. Samt end to end tester. 
+- **API (M5):** integrationstester mot GraphQL-servern med riktig databas – lokalt mot compose-databaserna, i pipelinen mot services. Ingen port, ingen mock: `yoga.fetch()` får samma request som browsern skickar.
+
+| GraphQL-API:et (`api/src/graphql/`) | integration | resolvers mot riktig databas: N+1-regression, inloggningskrav, fel med 200, migreringen av loggar | ja, 6 st (M5) |
+
 
 ## Testkarta 
 Här ser du vilka tester vi har samt vilka tester vi eventuellt planerar att göra. 
