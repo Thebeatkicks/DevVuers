@@ -33,5 +33,5 @@ Jobbet `Kvalitet` kör lint, formatkontroll och test. Jobbet `Bygg` bygger appli
 
 En pull request får bara mergas när båda jobben är gröna, minst en teammedlem har godkänt PR:n och branchen är uppdaterad mot `main`. Om något steg misslyckas måste felet åtgärdas och en ny commit pushas.
 
-| Integration (M5) | `npm run test:api` mot Postgres och Mongo som *services* | resolvers som inte stämmer med databasen, N+1 som kommit tillbaka, mutationer utan inloggningskrav – det klientens mockade tester aldrig ser | ~40 s inkl. start av databaserna |
+| Integration (M5) | `npm run test:api` mot Postgres och Mongo som *services* | resolvers som inte stämmer med databasen, N+1 som kommit tillbaka, mutationer utan inloggningskrav – det klientens mockade tester aldrig ser | ~47 s inkl. start av databaserna |
 
