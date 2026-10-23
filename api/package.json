@@ -9,7 +9,7 @@
     "seed": "node --env-file-if-exists=.env src/db/seed.js",
     "mongo:smoke": "node --env-file-if-exists=.env src/db/mongo-smoke.js",
     "typecheck": "tsc --noEmit",
-    "test": "vitest run",
+    "test": "node --env-file-if-exists=.env ../node_modules/vitest/vitest.mjs run",
     "migrate:logs": "node --env-file-if-exists=.env src/db/migrate-logs.js"
   },
   "dependencies": {

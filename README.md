@@ -1,134 +1,218 @@
 # Utpost
 
-Plattform för friluftsdestinationer. Redaktionella guider, användarnas egna turer och bilder.
+Plattform för friluftsdestinationer med redaktionella guider,
+användarnas turer, mätpunkter och bilder.
 
 ## Struktur
 
-- `api/` – Express + Postgres (Drizzle) + GraphQL (Yoga)
-- `web/` – React + Vite
-- `client/` – Vue 3 + Vite
-- `shared/` – TypeScript-typer för det API:et svarar med @utpost/shared: Guide, Tour, TourLog, User och ApiError. Fälten heter som i svaret snake_case. Används av både api/ och client/. Ändras ett svar ändras typen, i samma PR
+- `api/` – Express, GraphQL Yoga, Postgres och MongoDB.
+- `client/` – Vue 3, Vue Router och urql.
+- `web/` – den äldre React-klienten.
+- `shared/` – gemensamma TypeScript-typer för REST-kontraktet.
+- `docs/` – beslut, teststrategi och pipelinebeskrivning.
 
-## Krav 
+GraphQL-klientens typer och dokument genereras från API-schemat
+och klientens frågor till `client/src/gql/`.
 
-- Node.js `^22.18.0 || >=24.12.0`
-- Docker Desktop (för Postgres och MongoDB)
+## Krav
 
-## Kommandon
+- Node.js `^22.18.0 || >=24.12.0`.
+- Docker Desktop.
+- En lokal `api/.env` med `JWT_SECRET` och databasinställningar.
 
-Det finns två sätt att köra projektet:
+Kopiera `api/.env.example` till `api/.env` om filen inte redan finns.
+I PowerShell:
 
-### Alternativ 1: Kör allt i Docker
-Använd detta om du vill köra hela stacken (databaser, API och frontend) i container-miljö.
-
-```bash
-cp api/.env.example api/.env
-docker compose up --build
-npm run seed
+```powershell
+Copy-Item api/.env.example api/.env
 ```
 
-### Alternativ 2: Kör endast databaserna i Docker (Utvecklingsläge)
-Använd detta om du vill utveckla kod lokalt och använda `npm run dev`.
+Fyll i miljövariablerna innan API:et startas. `.env` är ignorerad
+av Git och ska inte committas.
+
+API-skripten läser `.env` automatiskt. Redan satta miljövariabler
+har företräde.
+
+## Lokal utveckling
+
+Kör kommandona från repots rot.
+
+### Databaser i Docker, applikationen lokalt
 
 ```bash
-npm install
-cp api/.env.example api/.env
+npm ci
 docker compose up -d postgres mongo
+```
+
+Vänta tills databaserna är redo. På en tom utvecklingsdatabas:
+
+```bash
 npm run seed
+npm run migrate:logs
 npm run dev
 ```
 
-*Obs: När Node-API:et körs lokalt utanför Docker ansluter det via `localhost` (`localhost:5433` för Postgres och `localhost:27017` för MongoDB) eftersom portarna är exporterade.*
+`seed` tömmer och återskapar testdata i Postgres. Kör det inte om
+du vill behålla befintlig lokal data. Efter en ny seedning behöver
+`migrate:logs` köras igen.
 
-Appen ligger sen på:
-- **Web:** http://localhost:3000
-- **Client:** http://localhost:3001
-- **API:** http://localhost:4000
-- **GraphQL:** http://localhost:4000/graphql (nås också via client på http://localhost:3001/graphql, som skickar vidare till API:et)
+Vid senare starter, när databaserna redan innehåller rätt data:
 
-*Obs: När hela applikationen körs i Docker ansluter API:et till databaserna via deras Compose-tjänstnamn (`postgres` respektive `mongo`).*
-
-I PowerShell används `Copy-Item api/.env.example api/.env` för att kopiera miljöfilen. Gör det bara om `api/.env` inte redan finns. API-skripten läser filen automatiskt; miljövariabler som redan är satta har företräde. `.env` är ignorerad av Git. `JWT_SECRET` måste vara satt, medan databasadresserna har lokala standardvärden.
-
-## MongoDB: första kopplingen
-
-Kör från repots rot efter att Docker Desktop har startat:
-
-```powershell
-docker compose up -d
-docker compose ps
-npm run mongo:smoke
+```bash
+docker compose up -d postgres mongo
+npm run dev
 ```
 
-Vänta tills MongoDB har startat innan smoke-kommandot körs. Det sparar en demotur med tre inbäddade mätpunkter i `utpost.tours`, läser tillbaka dokumentet och skriver ut det. Nästa körning återanvänder samma dokument. Anslutningen stängs när skriptet avslutas. Detta är första Mongo-kopplingen; befintliga API-routes använder fortfarande Postgres.
+| Tjänst | Adress vid lokal Node-körning |
+|---|---|
+| Vue-klient | http://localhost:3001 |
+| Äldre React-klient | http://localhost:3000 |
+| API | http://localhost:4000 |
+| GraphiQL | http://localhost:4000/graphql |
 
-`DATABASE_URL` anger Postgres-adressen. `MONGO_URL` anger Mongo-adressen och databasen `utpost`; `authSource=admin` anger var Compose-användaren autentiseras. Databaserna körs i Docker och Node-API:et körs lokalt, så adresserna använder `localhost`.
+### Klient, API och databaser i Docker
 
-För att öppna Mongo-terminalen för Compose-tjänsten:
-
-```powershell
-docker compose exec mongo mongosh -u utpost -p utpost --authenticationDatabase admin
+```bash
+docker compose up --build -d
 ```
 
-Skriv sedan `use utpost` och `db.tours.find()` inne i `mongosh`. `exit` tar dig tillbaka till PowerShell.
+På en tom utvecklingsdatabas:
 
-Om övningscontainern `mongo-test` redan kör på port 27017, stoppa den med `docker stop mongo-test` före Compose-starten. Den behåller sina data. `docker compose down` stoppar teamrepots databaser och behåller de namngivna volymerna; använd inte `down -v` om du vill behålla data.
+```bash
+docker compose exec api npm run seed
+docker compose exec api npm run migrate:logs
+```
+
+Öppna klienten på http://localhost:3001.
+
+Nginx skickar `/api` och `/graphql` vidare till API-containern.
+API-porten 4000 publiceras inte separat i den nuvarande Compose-filen.
+React-klienten ingår inte i denna Compose-konfiguration.
+
+### Databasadresser
+
+| Körmiljö | Postgres | MongoDB |
+|---|---|---|
+| Node lokalt, databaser i Docker | `localhost:5433` | `localhost:27017` |
+| API inne i Compose | `postgres:5432` | `mongo:27017` |
+| GitHub Actions Integration | `localhost:5432` | `localhost:27017` |
+
+Mongo-anslutningen använder `authSource=admin` för autentisering
+med Compose-miljöns root-användare.
+
+Databaserna har namngivna volymer. `docker compose down` behåller
+datan; `docker compose down -v` tar bort volymerna.
 
 ## Kommandon
 
-Kör från repots rot:
-
 | Kommando | Vad det gör |
 |---|---|
-| `npm run dev` | Startar api, web och client parallellt |
-| `npm run mongo:smoke` | Sparar och läser tillbaka en demotur i MongoDB |
-| `npm run lint` | Lintar `client` (täcker inte `api` eller `web`) |
-| `npm run format:check` | Kontrollerar formatering i `client` |
-| `npm test` | Kör tester för `client` |
-| `npm run build` | Bygger `web` och `client` (inte `api`) |
-| `npm run typecheck` | Typkontrollerar `shared` och `api` (inte `web` eller `client`) |
+| `npm run dev` | Startar API, React-klient och Vue-klient lokalt |
+| `npm run dev:api` | Startar API:et med automatisk omstart |
+| `npm run dev:client` | Startar Vue-klienten |
+| `npm run seed` | Återskapar testdata i Postgres |
+| `npm run migrate:logs` | Migrerar turdokument och mätpunkter till MongoDB och verifierar antal |
+| `npm run lint` | Lintar Vue-klienten |
+| `npm run format:check` | Kontrollerar formatering i Vue-klienten |
+| `npm run format` | Formaterar Vue-klientens källkod |
+| `npm run test --workspace=client` | Kör klienttesterna |
+| `npm run test:api` | Kör API-konfigurations- och integrationstester |
+| `npm test` | Kör både klient- och API-tester; API-testerna kräver databaser |
+| `npm run codegen` | Genererar GraphQL-typer och dokument för klienten |
+| `npm run typecheck` | Typkontrollerar shared, API och klient; klientsteget kör codegen före vue-tsc |
+| `npm run build` | Bygger React- och Vue-klienterna |
 
+Roten har inget `npm start`-kommando. API:et har ett eget
+startkommando som används i dess workspace/container.
 
-### `npm start`
+Det äldre `mongo:smoke`-skriptet från M3 skriver dokument med
+`logs` och `t`. M5 använder `points` och `recorded_at`.
+Använd därför `migrate:logs` för M5-datan. Om smoke-skriptet har
+körts behöver migreringen köras igen innan M5-testerna.
 
-Det finns inget `npm start`-skript. Använd `npm run dev` för utveckling och `npm run build` för att bygga. Deploy är inte aktuellt än, så något startskript för produktion saknas.
+## Datamodell och GraphQL
 
-## Deploy
+Guider, användare, foton och den befintliga turinformationen
+finns i Postgres. Migreringen skapar ett Mongo-dokument per tur
+med inbäddade `points` och förberäknad statistik.
 
-Inte aktuellt än.
+`Tour.logs` läser punkterna från MongoDB via DataLoader.
+Övriga berörda relationer batchas mot Postgres.
 
+Loaders skapas per GraphQL-anrop. Antalet databasfrågor visas
+i svarets `extensions.databasfragor`.
 
-## Working agreement
+Postgres-tabellen `tour_logs` finns kvar för befintliga
+REST-flöden och verifiering.
 
-- Vi använder oss av Discord för att kommunicera.
-- Vi träffas på fredagar har en dagliga avstämningar digitalt mån, tis, tors.
-- Så fort vi ser veckans nya uppgifter så skapar vi issues i Github projects och fördelar dem jämnt. 
-- Vi kommunicerar i Discord om vi fastnar på något.
-- Vid arbete skapar man en egen kortlivad branch, döper den beskrivande. När man är klar för man en pullrequest, meddelar det i discord. (Automatiserar detta senare), sedan får den som har tid granska och merga. 
+Se [databasbeslutet](docs/decisions/databas.md).
 
-## Skuld
-Se docs/debt.md för hela listan av alla funna skulder.
+## Tester och pipeline
 
+Pipelinen har fyra jobb:
+
+- **Kvalitet:** lint, formatering, klienttester,
+  API-konfigurationstester och typkontroll.
+- **Bygg:** bygger applikationen och sparar `client/dist`.
+- **Integration:** kör API-tester mot Postgres och MongoDB.
+- **Image:** bygger containerbilder och publicerar dem på main.
+
+Se [pipelinebeskrivningen](docs/pipeline.md) och
+[teststrategin](docs/testing.md).
 
 ## Mätningar M4
 
-Storlekarna är kolumnen Disk usage i `docker image ls`.
+Storlekarna kommer från kolumnen Disk usage i `docker image ls`.
 
-| Image | Före (steg 0) | Efter (steg 1) | Kommentar |
+| Image | Före | Efter | Kommentar |
 |---|---:|---:|---|
-| `utpost-image-…-client` | 567 MB | 73,8 MB | före: Node + node_modules + dist · efter: nginx + dist |
-| `utpost-image-…-api` | 287 MB | 287 MB | en stage, ska inte ändras |
-| `nginx:1.27-alpine` (basen) | – | 74,5 MB | syns i listan bara om man hämtat den med `docker pull nginx:1.27-alpine` |
+| Client | 567 MB | 73,8 MB | Node och byggberoenden ersatta av nginx och byggd dist |
+| API | 287 MB | 287 MB | En stage; oförändrad i denna mätning |
+| `nginx:1.27-alpine` | – | 74,5 MB | Referens för basimagen |
 
-Klient-imagen (73,8 MB) är nästan lika stor som basimagen nginx:1.27-alpine (74,5 MB). `docker history utpost-client` visar att den bara lägger till 168 kB (`dist/`) och 20,5 kB (`nginx.conf`) ovanpå basen, och att inga lager med Node eller `node_modules` finns kvar. Multi-stage-bygget slängde alltså bort byggverktygen och behöll bara de statiska filerna.
+`docker history utpost-client` visade tillägg på cirka 168 kB
+för `dist/` och 20,5 kB för `nginx.conf`. Den slutliga
+klientimagen innehåller inga lager med Node eller node_modules.
 
-### Migrering av turloggar till MongoDB
+## Mätning före/efter (M5)
+
+### DataLoader
+
+Följande fråga används för den dokumenterade mätningen med tre turer:
+
+```graphql
+query TurerM5 {
+  tours(limit: 3) {
+    id
+    title
+    distanceM
+    user { displayName }
+    guide { title }
+    photos { id }
+  }
+}
+```
+
+| Mätning | Före | Efter |
+|---|---:|---:|
+| Antal databasfrågor | 10 | 4 |
+
+Före-värdet kommer från API-loggen. Efter-värdet visas i
+`extensions.databasfragor`.
+
+TODO: komplettera med frågans namn, innehåll och verkliga
+före/efter-siffror för teamets tyngsta fråga om den skiljer sig
+från mätningen ovan. Ett saknat före-värde får inte uppskattas.
+
+### Migrering till MongoDB
 
 Migreringen följer M3-modellen med inbäddade `points`.
-Skriptet räknar sparade dokument och faktiska mätpunkter i MongoDB
-och jämför med Postgres. Avvikande antal ger felkod.
+
+Skriptet räknar sparade dokument och faktiska mätpunkter i
+MongoDB och jämför med Postgres. Avvikande antal ger felkod.
 
 Första körningen:
+
 ```text
 MongoDB: 199 nya, 1 ändrade dokument
 Turer: Postgres 200, MongoDB 200
@@ -137,6 +221,7 @@ Verifiering OK: antal turer och mätpunkter stämmer
 ```
 
 Andra körningen:
+
 ```text
 MongoDB: 0 nya, 200 ändrade dokument
 Turer: Postgres 200, MongoDB 200
@@ -145,9 +230,80 @@ Verifiering OK: antal turer och mätpunkter stämmer
 ```
 
 Omkörningen skapade inga nya dokument eller extra mätpunkter.
-## Mätning för/efter (M5)
-Samma fråga kördes före och efter DataLoader. Före-värdet kommer från API-loggen, efter-värdet från `extensions.databasfragor`.
+Antalen gäller denna datamängd; seedningen genererar slumpmässig
+testdata och kan ge andra antal mätpunkter nästa gång.
 
-| Fråga | Före | Efter |
-|---|---:|---:|
-| `tours(limit: 3) { id title distanceM user { displayName } guide { title } photos { id } }` | 10 | 4 |
+### GraphQL läser mätpunkter från MongoDB
+
+```graphql
+query KontrolleraMongoBatch {
+  tours(limit: 3) {
+    id
+    title
+    logs {
+      recordedAt
+    }
+  }
+}
+```
+
+Frågan returnerade turerna 19, 40 och 169 med 32, 20 respektive
+32 mätpunkter, utan GraphQL-fel.
+
+`extensions.databasfragor` var 2:
+en Postgres-fråga för turlistan och en batchad Mongo-fråga
+för samtliga tre turers punkter.
+
+### Integrationstester
+
+API:et har 6 integrationstester och 4 konfigurationstester.
+Samtliga passerade i följande körning på main:
+
+[Grön M5-körning](https://github.com/Thebeatkicks/DevVuers/actions/runs/39934692464)
+
+Integrationstesterna täcker turlistan och N+1, saknad guide,
+ogiltigt GraphQL-fält, mutation med och utan inloggning
+samt läsning av mätpunkter från MongoDB.
+
+### Bevis: N+1-regressionstest
+
+Vi har gjort testet och det fungerar. 
+
+- Fråga: `Turer` i `api/src/graphql/server.test.js`.
+- Med loader: [uppmätt antal frågor och testresultat].
+- Utan loader för `Tour.user`: [uppmätt antal och faktisk felrad].
+- Efter återställning: [grönt testresultat].
+
+
+### Bevis: schemaändring stoppar typkontrollen
+
+TODO: ta tillfälligt bort ett schemafält som en vy använder,
+kör `npm run typecheck` och dokumentera resultatet.
+
+- Borttaget schemafält: [fält].
+- Berörd vy/fråga: [namn].
+- Faktisk felrad:
+
+```text
+TODO: klistra in felraden från codegen/typecheck.
+```
+
+- Efter återställning: [grönt resultat].
+
+PR #81 innehåller ett separat bevis där `distanceM` togs bort
+ur klientfrågan medan vyn fortfarande använde fältet.
+Det försöket ersätter inte försöket med ett borttaget schemafält.
+
+## Working agreement
+
+- Vi använder Discord för kommunikation.
+- Vi har avstämningar enligt teamets överenskomna schema.
+- Veckans uppgifter läggs i GitHub Projects och fördelas i teamet.
+- Vi säger till när vi fastnar.
+- Ändringar görs på kortlivade brancher med beskrivande namn.
+- Arbetet lämnas som PR och granskas av en annan teammedlem.
+- Alla fyra obligatoriska CI-jobb ska vara gröna före merge.
+
+## Skuldinventering
+
+Se [docs/debt.md](docs/debt.md).
