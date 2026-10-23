@@ -7,7 +7,6 @@ import router from "./router";
 import urql from "@urql/vue";
 import { urqlOptions } from "./urql";
 
-
 const app = createApp(App);
 
 app.use(createPinia());

@@ -1,20 +1,22 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import "@testing-library/jest-dom/vitest";
+import { ref } from "vue";
 import { render, screen } from "@testing-library/vue";
-import urql, { cacheExchange, fetchExchange } from "@urql/vue";
 import ToursView from "./ToursView.vue";
 
-const mockedFetch = vi.fn();
+const { useQuery } = vi.hoisted(() => ({ useQuery: vi.fn() }));
+vi.mock("@urql/vue", () => ({ useQuery }));
 
-// urql läser content-type och svarstexten, inte bara json(), så mock-svaret måste ha båda.
-const respondWith = (data: unknown, ok = true, status = 200) =>
-  ({
-    ok,
-    status,
-    headers: new Headers({ "content-type": "application/json" }),
-    json: async () => data,
-    text: async () => JSON.stringify(data),
-  }) as Response;
+// Samma form som urqls useQuery returnerar: refs för data, fetching och error.
+const queryResult = (state: {
+  data?: unknown;
+  fetching?: boolean;
+  error?: unknown;
+}) => ({
+  data: ref(state.data),
+  fetching: ref(state.fetching ?? false),
+  error: ref(state.error),
+});
 
 const stubs = {
   RouterLink: {
@@ -23,32 +25,14 @@ const stubs = {
   },
 };
 
-// Samma klient som main.js skapar, men ny för varje render så att cachen inte läcker mellan tester.
-const renderView = () =>
-  render(ToursView, {
-    global: {
-      stubs,
-      plugins: [
-        [urql, { url: "/graphql", exchanges: [cacheExchange, fetchExchange] }],
-      ],
-    },
-  });
-
 describe("ToursView", () => {
   beforeEach(() => {
-    vi.stubGlobal("fetch", mockedFetch);
-    vi.spyOn(console, "error").mockImplementation(() => {});
-  });
-
-  afterEach(() => {
-    vi.unstubAllGlobals();
-    vi.restoreAllMocks();
-    mockedFetch.mockReset();
+    useQuery.mockReset();
   });
 
   it("visar turens uppgifter och en länk till turen", async () => {
-    mockedFetch.mockResolvedValue(
-      respondWith({
+    useQuery.mockReturnValue(
+      queryResult({
         data: {
           tours: [
             {
@@ -64,7 +48,7 @@ describe("ToursView", () => {
       }),
     );
 
-    renderView();
+    render(ToursView, { global: { stubs } });
 
     expect(
       await screen.findByRole("link", { name: "Kebnekaise runt" }),
@@ -73,31 +57,32 @@ describe("ToursView", () => {
     expect(screen.getByText("Fjällvandring")).toBeInTheDocument();
     expect(screen.getByText("12.3 km")).toBeInTheDocument();
     expect(screen.getByText("2")).toBeInTheDocument();
-
-    // Hela vyn hämtas med ett enda anrop till /graphql (urql lägger frågan i URL:en vid GET)
-    expect(mockedFetch).toHaveBeenCalledTimes(1);
-    expect(String(mockedFetch.mock.calls[0]![0])).toMatch(/^\/graphql(\?|$)/);
   });
 
-  it("visar ett fel när det inte går att hämta turerna", async () => {
-    mockedFetch.mockRejectedValue(new Error("Nätverksfel"));
+  it("ber om de 50 senaste turerna", () => {
+    useQuery.mockReturnValue(queryResult({ data: { tours: [] } }));
 
-    renderView();
+    render(ToursView, { global: { stubs } });
 
-    expect(
-      await screen.findByText("Kunde inte ladda turer."),
-    ).toBeInTheDocument();
-  });
-
-  it("visar ett fel när svaret innehåller errors", async () => {
-    mockedFetch.mockResolvedValue(
-      respondWith({ errors: [{ message: "Unexpected error." }] }),
+    expect(useQuery).toHaveBeenCalledTimes(1);
+    expect(useQuery).toHaveBeenCalledWith(
+      expect.objectContaining({ variables: { limit: 50 } }),
     );
+  });
 
-    renderView();
+  it("visar att turerna laddas", () => {
+    useQuery.mockReturnValue(queryResult({ fetching: true }));
 
-    expect(
-      await screen.findByText("Kunde inte ladda turer."),
-    ).toBeInTheDocument();
+    render(ToursView, { global: { stubs } });
+
+    expect(screen.getByText("Laddar turer...")).toBeInTheDocument();
+  });
+
+  it("visar ett fel när det inte går att hämta turerna", () => {
+    useQuery.mockReturnValue(queryResult({ error: new Error("Nätverksfel") }));
+
+    render(ToursView, { global: { stubs } });
+
+    expect(screen.getByText("Kunde inte ladda turer.")).toBeInTheDocument();
   });
 });
