@@ -178,11 +178,11 @@ klientimagen innehåller inga lager med Node eller node_modules.
 
 ### DataLoader
 
-Följande fråga används för den dokumenterade mätningen med tre turer:
+Följande fråga används för den dokumenterade mätningen med 50 turer:
 
 ```graphql
 query TurerM5 {
-  tours(limit: 3) {
+  tours {
     id
     title
     distanceM
@@ -195,14 +195,10 @@ query TurerM5 {
 
 | Mätning | Före | Efter |
 |---|---:|---:|
-| Antal databasfrågor | 10 | 4 |
+| Antal databasfrågor | 139 | 4 |
 
 Före-värdet kommer från API-loggen. Efter-värdet visas i
 `extensions.databasfragor`.
-
-TODO: komplettera med frågans namn, innehåll och verkliga
-före/efter-siffror för teamets tyngsta fråga om den skiljer sig
-från mätningen ovan. Ett saknat före-värde får inte uppskattas.
 
 ### Migrering till MongoDB
 
@@ -270,9 +266,12 @@ samt läsning av mätpunkter från MongoDB.
 Vi har gjort testet och det fungerar. 
 
 - Fråga: `Turer` i `api/src/graphql/server.test.js`.
-- Med loader: [uppmätt antal frågor och testresultat].
-- Utan loader för `Tour.user`: [uppmätt antal och faktisk felrad].
-- Efter återställning: [grönt testresultat].
+- Med loader: 2.
+- Utan loader för `Tour.user`: 51 databasfrågor (1 + 50 enskilda användarfrågor). Testet fallerar med felraden:
+  ```text
+  AssertionError: expected 51 to be <= 2
+  ```
+- Efter återställning: ger grönt test resultat.
 
 
 ### Bevis: schemaändring stoppar typkontrollen
@@ -330,4 +329,4 @@ Det försöket ersätter inte försöket med ett borttaget schemafält.
 
 ## Skuldinventering
 
-Se [docs/debt.md](docs/debt.md).
+Se [docs/debt.md](docs/debt.md). 
