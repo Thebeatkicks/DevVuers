@@ -272,19 +272,43 @@ Vi har gjort testet och det fungerar.
 
 
 ### Bevis: schemaändring stoppar typkontrollen
+Vi tog tillfälligt bort `distanceM` ur `type Tour` i `api/src/graphql/schema.js`
+och körde `npm run typecheck -w client`. Codegen validerar frågorna mot schemat
+och stoppar innan `vue-tsc` körs.
 
-TODO: ta tillfälligt bort ett schemafält som en vy använder,
-kör `npm run typecheck` och dokumentera resultatet.
-
-- Borttaget schemafält: [fält].
-- Berörd vy/fråga: [namn].
+- Borttaget schemafält: `distanceM` på `type Tour`.
+- Berörd vy/fråga: `Tours`-frågan i `client/src/views/ToursView.vue`.
 - Faktisk felrad:
 
 ```text
-TODO: klistra in felraden från codegen/typecheck.
+> graphql-codegen && vue-tsc --noEmit
+
+✔ Parse Configuration
+⚠ Generate outputs
+  ❯ Generate to ./src/gql/
+    ✔ Load GraphQL schemas
+    ✔ Load GraphQL documents
+    ✖ GraphQL Document Validation failed with 1 errors;
+      Error 0: Cannot query field "distanceM" on type "Tour".
+        at client/src/views/ToursView.vue:6:7
+  ✖ One or more errors occurred, no files were generated.
 ```
 
-- Efter återställning: [grönt resultat].
+
+- Efter återställning (`git checkout api/src/graphql/schema.js`) är typkontrollen grön:
+
+```text
+> utpost@1.4.2 typecheck
+> npm run typecheck --workspace=shared && npm run typecheck --workspace=api && npm run typecheck --workspace=client
+
+> @utpost/client@0.1.0 typecheck
+> graphql-codegen && vue-tsc --noEmit
+
+✔ Parse Configuration
+✔ Generate outputs
+```
+
+
 
 PR #81 innehåller ett separat bevis där `distanceM` togs bort
 ur klientfrågan medan vyn fortfarande använde fältet.
