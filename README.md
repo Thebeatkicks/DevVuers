@@ -195,7 +195,7 @@ query TurerM5 {
 
 | Mätning | Före | Efter |
 |---|---:|---:|
-| Antal databasfrågor | 10 | 4 |
+| Antal databasfrågor | 139 | 4 |
 
 Före-värdet kommer från API-loggen. Efter-värdet visas i
 `extensions.databasfragor`.
