@@ -34,18 +34,15 @@ services:
 
   api:
     build:
-    
-      context: . # repots rot, inte api/ – Dockerfilen kopierar shared/ också
+      context: .
       dockerfile: api/Dockerfile
-    env_file:
-     - ./api/.env
+      args:
+        GIT_SHA: ${GIT_SHA:-dev}
     environment:
-      # Inne i compose-nätverket heter databaserna som tjänsterna: postgres och mongo, inte localhost.
-      # Portarna är containrarnas egna (5432), inte de publicerade (5433).
       DATABASE_URL: postgres://utpost:utpost@postgres:5432/utpost
       MONGO_URL: mongodb://utpost:utpost@mongo:27017/utpost?authSource=admin
-    # Inga ports: browsern når API:et genom nginx i client (/api och /graphql skickas vidare
-    # till api:4000 inne i nätverket). Felsöka API:et direkt? Lägg tillbaka  ports: - "4000:4000"
+      JWT_SECRET: "${JWT_SECRET:?Kopiera .env.example till .env först}"
+      SEED_ON_START: "1"
     depends_on:
       postgres:
         condition: service_healthy
@@ -53,6 +50,8 @@ services:
         condition: service_healthy
 
   client:
+    environment:
+      API_UPSTREAM: api:4000
     build:
       context: .
       dockerfile: client/Dockerfile

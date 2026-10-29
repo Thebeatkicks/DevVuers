@@ -1,4 +1,9 @@
 # nginx i client-imagen: skickar ut de byggda filerna och släpper igenom API-anropen.
+#
+# M6: det här är en MALL. nginx-imagen kör envsubst på den när containern startar och lägger
+# resultatet i /etc/nginx/conf.d/default.conf. ${API_UPSTREAM} byts mot miljövariabeln –
+# api:4000 i compose, localhost:4000 i Azure där api kör som sidecar i samma app.
+# nginx egna variabler ($uri, $host …) rörs inte: envsubst byter bara ut namn som finns i miljön.
 server {
   listen 80;
   root /usr/share/nginx/html;
@@ -17,11 +22,11 @@ server {
   }
 
   # Browsern pratar bara med den här servern. Anrop till /api och /graphql skickas vidare
-  # till tjänsten api inne i compose-nätverket – med tjänstnamnet, inte localhost.
+  # till API:et – adressen kommer från miljön, inte från den här filen.
   location /api/ {
-    proxy_pass http://api:4000;
+    proxy_pass http://${API_UPSTREAM};
   }
   location /graphql {
-    proxy_pass http://api:4000;
+    proxy_pass http://${API_UPSTREAM};
   }
 }

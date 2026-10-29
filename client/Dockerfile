@@ -18,7 +18,11 @@ RUN npm run build --workspace=client
 # ingen källkod. Allt från steg 1 som inte kopieras hit kastas.
 FROM nginx:1.27-alpine
 
-COPY client/nginx.conf /etc/nginx/conf.d/default.conf
+# M6: adressen till API:et får inte vara hårdkodad. nginx-imagen kör envsubst på allt i /etc/nginx/templates/
+# när containern startar och skriver resultatet till /etc/nginx/conf.d/ – så ${API_UPSTREAM} i mallen
+# blir api:4000 i compose och localhost:4000 i Azure, med samma image.
+COPY client/nginx.conf.template /etc/nginx/templates/default.conf.template
+ENV API_UPSTREAM=api:4000
 COPY --from=build /app/client/dist /usr/share/nginx/html
 
 EXPOSE 80
