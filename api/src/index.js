@@ -35,7 +35,7 @@ app.get('/api/health', async (req, res) => {
     await mongo.db().command({ ping: 1 });
   });
   const ok = postgres.ok && mongoDb.ok;
-  res.status(ok ? 200 : 500).json({ ok, postgres, mongoDb });
+  res.status(ok ? 200 : 500).json({ ok, sha: config.gitSha, postgres, mongoDb });
 });
 
 app.use('/api/auth', authRouter);

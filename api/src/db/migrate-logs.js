@@ -1,5 +1,6 @@
 import { pool } from './client.js';
 import { mongo, toursCollection } from './mongo.js';
+import { pathToFileURL } from 'node:url';
 
 function buildTourDocument(tour, logs) {
   const points = logs.map((log) => ({
@@ -48,7 +49,7 @@ function buildTourDocument(tour, logs) {
   };
 }
 
-async function migrateLogs() {
+export async function migrateLogs() {
   const { rows: tours } = await pool.query(
     'select * from tours order by id'
   );
@@ -158,14 +159,11 @@ if (savedTours !== tours.length || savedPoints !== logs.length) {
 console.log('Verifiering OK: antal turer och mätpunkter stämmer');
 }
 
-try {
-  await migrateLogs();
-} catch (error) {
-  console.error('Migreringen misslyckades:', error);
-  process.exitCode = 1;
-} finally {
-  await Promise.all([
-    mongo.close(),
-    pool.end(),
-  ]);
-} 
+if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
+  migrateLogs()
+    .catch((error) => {
+      console.error('Migreringen misslyckades:', error);
+      process.exitCode = 1;
+    })
+    .finally(() => Promise.all([mongo.close(), pool.end()]));
+}

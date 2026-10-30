@@ -112,6 +112,8 @@ jobs:
             type=raw,value=latest,enable={{is_default_branch}}
       - uses: docker/build-push-action@v6
         with:
+          build-args: |
+            GIT_SHA=${{ github.sha }}
           context: .                   # repots rot, som i compose.yaml
           file: api/Dockerfile
           push: ${{ github.event_name == 'push' }}
