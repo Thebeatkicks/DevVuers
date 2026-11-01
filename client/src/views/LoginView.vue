@@ -1,19 +1,22 @@
 <script setup lang="ts">
-import { ref } from "vue";
+import { ref, onMounted } from "vue";
 import { useRouter } from "vue-router";
 import { useSessionStore } from "@/stores/session";
+import BaseButton from "../components/BaseButton.vue";
 
 const session = useSessionStore();
 const router = useRouter();
 const email = ref<string>("");
 const password_hash = ref<string>("");
 
+onMounted(() => session.clearError());
+
 const onSubmit = async () => {
   await session.login({
     email: email.value,
     password_hash: password_hash.value,
   });
-  if (session.isLoggedIn) await router.push("/profil");
+  if (session.isLoggedIn) await router.push("/profile");
 };
 </script>
 
@@ -25,9 +28,8 @@ const onSubmit = async () => {
     <p v-if="session.errorParagraph" class="error">
       {{ session.errorParagraph }}
     </p>
-    <button type="submit" class="button-blue" :disabled="session.loading">
-      Logga in
-    </button>
+    <BaseButton type="submit" :disabled="session.loading">Logga in</BaseButton>
+    <RouterLink to="/register">Skapa konto</RouterLink>
   </form>
 </template>
 

@@ -1,10 +1,14 @@
 import { post } from "../api";
-import type { LoginRequest, LoginResponse } from "../../../shared/src/types";
+import type { LoginRequest, LoginResponse, RegisterRequest} from "../../../shared/src/types";
 
 export function login(credentials: LoginRequest): Promise<LoginResponse> {
   return post<LoginResponse>("/auth/login", credentials);
 }
 
 export function logout(): Promise<void> {
-  return post<void>("/auth/login", {});
+  return post<void>("/auth/logout", {});
+}
+
+export function register(credentials: RegisterRequest): Promise<LoginResponse> {
+  return post<LoginResponse>("/auth/register", credentials);
 }

@@ -7,7 +7,6 @@ användarnas turer, mätpunkter och bilder.
 
 - `api/` – Express, GraphQL Yoga, Postgres och MongoDB.
 - `client/` – Vue 3, Vue Router och urql.
-- `web/` – den äldre React-klienten.
 - `shared/` – gemensamma TypeScript-typer för REST-kontraktet.
 - `docs/` – beslut, teststrategi och pipelinebeskrivning.
 
@@ -66,7 +65,6 @@ npm run dev
 | Tjänst | Adress vid lokal Node-körning |
 |---|---|
 | Vue-klient | http://localhost:3001 |
-| Äldre React-klient | http://localhost:3000 |
 | API | http://localhost:4000 |
 | GraphiQL | http://localhost:4000/graphql |
 
@@ -87,7 +85,6 @@ docker compose exec api npm run migrate:logs
 
 Nginx skickar `/api` och `/graphql` vidare till API-containern.
 API-porten 4000 publiceras inte separat i den nuvarande Compose-filen.
-React-klienten ingår inte i denna Compose-konfiguration.
 
 ### Databasadresser
 
@@ -107,7 +104,7 @@ datan; `docker compose down -v` tar bort volymerna.
 
 | Kommando | Vad det gör |
 |---|---|
-| `npm run dev` | Startar API, React-klient och Vue-klient lokalt |
+| `npm run dev` | Startar API och Vue-klient lokalt |
 | `npm run dev:api` | Startar API:et med automatisk omstart |
 | `npm run dev:client` | Startar Vue-klienten |
 | `npm run seed` | Återskapar testdata i Postgres |
@@ -120,7 +117,7 @@ datan; `docker compose down -v` tar bort volymerna.
 | `npm test` | Kör både klient- och API-tester; API-testerna kräver databaser |
 | `npm run codegen` | Genererar GraphQL-typer och dokument för klienten |
 | `npm run typecheck` | Typkontrollerar shared, API och klient; klientsteget kör codegen före vue-tsc |
-| `npm run build` | Bygger React- och Vue-klienterna |
+| `npm run build` | Bygger Vue-klienterna |
 
 Roten har inget `npm start`-kommando. API:et har ett eget
 startkommando som används i dess workspace/container.
