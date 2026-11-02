@@ -150,6 +150,21 @@ status innan den används som färdigt bevis. Den ska inte mergas.
 
 [Temporär test-PR #83](https://github.com/Thebeatkicks/DevVuers/pull/83)
 
+### Jämförelse vid borttagandet av web/
+
+Mätning av körtider i CI före och efter att `web/`-mappen togs bort:
+
+| Jobb | Moment som mätts | Före | Efter |
+| --- | --- | --- | --- |
+| Kvalitet | Lint, formatering, klienttester, API-konfigtester, typkontroll | 6 s | 8 s |
+| Bygg | Bygger Vue-klienten och sparar `client/dist` | 7 s | 9 s |
+| Integration | API-tester mot Postgres och MongoDB | 5 s | 9 s |
+
+**Tolkning**
+Paketen i `web/` utgjorde endast ett fåtal av projektets totala beroenden, vilket gör att skillnaden i `npm ci`-tid och jobbets exekveringstid är försumbar mellan körningarna (variationer beror främst på tillfällig belastning i GitHub Actions). 
+
+Den primära vinsten med borttagandet är istället en mindre Docker-image samt att bygg-, lint- och typkontrollstegen inte längre behöver hantera oanvänd React-kod. För att verifiera storleksskillnaden på containerbilderna är `docker image ls` ett mer relevant mätvärde än körtid i CI.
+
 ## Felsökning
 
 ### JWT_SECRET måste vara satt
@@ -181,14 +196,3 @@ seedning, migrering och committade filer.
 
 Se [teststrategin](testing.md) för lokal körning och
 [README](../README.md) för M5-bevisen.
-
-### Mätningar för npm ci före och efter bortagandet av web/
-
-| Jobb | Vad | Varför | Före | Efter |
-| --- | --- | --- | --- | --- |
-| Kvalitet | lint, formatering, klienttester, API-konfigtester, typkontroll | Fångar fel innan bygg | 6 s | 8 s |
-| Bygg | bygger Vue-klienten, sparar `client/dist` | Visar att appen går att bygga | 7 s | 9 s |
-| Integration | API-tester mot Postgres och MongoDB | Testar mot riktiga databaser | 5 s | 9 s |
-
-**Tolkning**
-React och alla packages `web/` behövde utgorde endast några tiotal packet medan hundratals paket fortfarande ligger kvar. Därför ändrades resultaten efteråt knappt. Dock blir Docker-imagen mindre och att npm run build, lint och typecheck inte längre behöver röra React-koden. Därför hade det varit mer relevant att mäta docker image ls istället. Både före och efter om man vill ha en tydligare bild  kring vad för skillnad vi fått utav att ta bort `web/`.
