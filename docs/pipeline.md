@@ -184,7 +184,11 @@ Se [teststrategin](testing.md) för lokal körning och
 
 ### Mätningar för npm ci före och efter bortagandet av web/
 
-| Före | Efter |
-|---|---|
-| 0 | 0 |
-| 0 | 0 |
+| Var | Före | Efter |
+| --- | --- | --- |
+| Kvalitet | 6 s | 8 s |
+| Bygg | 7 s | 9 s |
+| Integration | 5 s | 9 s |
+
+**Tolkning**
+React och alla packages `web/` behövde utgorde endast några tiotal packet medan hundratals paket fortfarande ligger kvar. Därför ändrades resultaten efteråt knappt. Dock blir Docker-imagen mindre och att npm run build, lint och typecheck inte längre behöver röra React-koden. Därför hade det varit mer relevant att mäta docker image ls istället. Både före och efter om man vill ha en tydligare bild  kring vad för skillnad vi fått utav att ta bort `web/`.
