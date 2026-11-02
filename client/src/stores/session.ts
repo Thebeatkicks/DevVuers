@@ -1,17 +1,21 @@
 import { ref, computed } from "vue";
 import { defineStore } from "pinia";
-import { 
-  login as apiLogin, 
+import {
+  login as apiLogin,
   logout as apiLogout,
   register as apiRegister,
 } from "@/api/auth";
-import type { LoginRequest, RegisterRequest, User } from "../../../shared/src/types";
+import type {
+  LoginRequest,
+  RegisterRequest,
+  User,
+} from "../../../shared/src/types";
 import router from "@/router";
 
 export const useSessionStore = defineStore("session", () => {
   const storedUser = localStorage.getItem("user");
   const user = ref<User | null>(storedUser ? JSON.parse(storedUser) : null);
-  const token = ref<string |null>(localStorage.getItem("token"));
+  const token = ref<string | null>(localStorage.getItem("token"));
   const errorParagraph = ref<string | null>(null);
   const loading = ref(false);
 
@@ -43,10 +47,10 @@ export const useSessionStore = defineStore("session", () => {
       await apiLogout();
     } catch (error) {
       console.log(
-        "Utloggningen misslyckades", 
-        error instanceof Error ? error.message : error);
-    }
-    finally {
+        "Utloggningen misslyckades",
+        error instanceof Error ? error.message : error,
+      );
+    } finally {
       user.value = null;
       token.value = null;
       localStorage.removeItem("token");
@@ -67,7 +71,7 @@ export const useSessionStore = defineStore("session", () => {
       await router.push("/profil");
     } catch (error) {
       user.value = null;
-      errorParagraph.value = 
+      errorParagraph.value =
         error instanceof Error ? error.message : "Kunde inte skapa kontot.";
     } finally {
       loading.value = false;
@@ -78,5 +82,15 @@ export const useSessionStore = defineStore("session", () => {
     errorParagraph.value = null;
   }
 
-  return { user, token, errorParagraph, loading, isLoggedIn, login, logout, register, clearError };
+  return {
+    user,
+    token,
+    errorParagraph,
+    loading,
+    isLoggedIn,
+    login,
+    logout,
+    register,
+    clearError,
+  };
 });

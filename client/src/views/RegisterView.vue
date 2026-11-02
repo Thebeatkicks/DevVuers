@@ -24,15 +24,22 @@ const onSubmit = async () => {
     <h1>Skapa konto</h1>
     <input v-model="display_name" placeholder="Visningsnamn" required />
     <input v-model="email" placeholder="E-post" required />
-    <input v-model="password_hash" type="password" placeholder="Lösenord" required />
+    <input
+      v-model="password_hash"
+      type="password"
+      placeholder="Lösenord"
+      required
+    />
     <p v-if="session.errorParagraph" class="error">
       {{ session.errorParagraph }}
     </p>
-        <div>
-        <p>Redan ett konto?</p>
-        <RouterLink to="/login">Logga in istället</RouterLink>
+    <div>
+      <p>Redan ett konto?</p>
+      <RouterLink to="/login">Logga in istället</RouterLink>
     </div>
-    <BaseButton type="submit" :disabled="session.loading">Skapa konto</BaseButton>
+    <BaseButton type="submit" :disabled="session.loading"
+      >Skapa konto</BaseButton
+    >
   </form>
 </template>
 

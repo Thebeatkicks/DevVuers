@@ -7,16 +7,16 @@ const session = useSessionStore();
 const router = useRouter();
 
 router.beforeEach((to) => {
-     const session = useSessionStore();
-     if (to.meta.requiresAuth && !session.isLoggedIn) return "/login";
-   });
+  const session = useSessionStore();
+  if (to.meta.requiresAuth && !session.isLoggedIn) return "/login";
+});
 </script>
 
 <template>
   <div class="profile">
     <h1>This is the profile page</h1>
     <h1>Min profil</h1>
-   <p v-if="session.user">Inloggad som {{ session.user.email }}</p>
+    <p v-if="session.user">Inloggad som {{ session.user.email }}</p>
     <BaseButton @click="session.logout">Logga ut</BaseButton>
   </div>
 </template>

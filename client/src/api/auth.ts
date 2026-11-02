@@ -1,5 +1,9 @@
 import { post } from "../api";
-import type { LoginRequest, LoginResponse, RegisterRequest} from "../../../shared/src/types";
+import type {
+  LoginRequest,
+  LoginResponse,
+  RegisterRequest,
+} from "../../../shared/src/types";
 
 export function login(credentials: LoginRequest): Promise<LoginResponse> {
   return post<LoginResponse>("/auth/login", credentials);
