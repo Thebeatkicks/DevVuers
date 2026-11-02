@@ -181,3 +181,10 @@ seedning, migrering och committade filer.
 
 Se [teststrategin](testing.md) för lokal körning och
 [README](../README.md) för M5-bevisen.
+
+### Mätningar för npm ci före och efter bortagandet av web/
+
+| Före | Efter |
+|---|---|
+| 0 | 0 |
+| 0 | 0 |
