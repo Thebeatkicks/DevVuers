@@ -1,14 +1,9 @@
 <script setup lang="ts">
-import { useRouter, RouterLink } from "vue-router";
+import { RouterLink } from "vue-router";
 import { useSessionStore } from "@/stores/session";
+import BaseButton from "./BaseButton.vue";
 
 const session = useSessionStore();
-const router = useRouter();
-
-async function onLogout() {
-  await session.logout();
-  await router.push("/");
-}
 </script>
 
 <template>
@@ -22,9 +17,9 @@ async function onLogout() {
 
         <template v-if="session.isLoggedIn">
           <RouterLink to="/profil">Min sida</RouterLink>
-          <button @click="onLogout">Logga ut</button>
+          <BaseButton @click="session.logout">Logga ut</BaseButton>
         </template>
-        <RouterLink v-else to="/logga-in">Logga in</RouterLink>
+        <RouterLink v-else to="/login">Logga in</RouterLink>
       </nav>
     </div>
   </header>

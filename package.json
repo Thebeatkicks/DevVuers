@@ -2,10 +2,9 @@
   "name": "utpost",
   "private": true,
   "version": "1.4.2",
-  "workspaces": ["api", "web", "client", "shared"],
+  "workspaces": ["api", "client", "shared"],
   "scripts": {
-    "dev": "concurrently -n api,web,client -c blue,green,yellow \"npm run dev --workspace=api\" \"npm run dev --workspace=web\" \"npm run dev --workspace=client\"",
-    "dev:web": "npm run dev --workspace=web",
+    "dev": "concurrently -n api,client -c blue,yellow \"npm run dev --workspace=api\" \"npm run dev --workspace=client\"",
     "dev:client": "npm run dev --workspace=client",
     "dev:api": "npm run dev --workspace=api",
     "seed": "npm run seed --workspace=api",
@@ -15,7 +14,7 @@
     "format": "npm run format --workspace=client",
     "test": "npm run test --workspace=client && npm run test --workspace=api",
     "typecheck": "npm run typecheck --workspace=shared && npm run typecheck --workspace=api && npm run typecheck --workspace=client",
-    "build": "npm run build --workspace=web && npm run build --workspace=client",
+    "build": "npm run build --workspace=client",
     "migrate:logs": "npm run migrate:logs --workspace=api",
     "codegen": "npm run codegen --workspace=client",
     "test:api": "npm run test --workspace=api"

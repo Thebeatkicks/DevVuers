@@ -150,6 +150,21 @@ status innan den används som färdigt bevis. Den ska inte mergas.
 
 [Temporär test-PR #83](https://github.com/Thebeatkicks/DevVuers/pull/83)
 
+### Jämförelse vid borttagandet av web/
+
+Mätning av körtider i CI före och efter att `web/`-mappen togs bort:
+
+| Jobb | Moment som mätts | Före | Efter |
+| --- | --- | --- | --- |
+| Kvalitet | Lint, formatering, klienttester, API-konfigtester, typkontroll | 6 s | 8 s |
+| Bygg | Bygger Vue-klienten och sparar `client/dist` | 7 s | 9 s |
+| Integration | API-tester mot Postgres och MongoDB | 5 s | 9 s |
+
+**Tolkning**
+Paketen i `web/` utgjorde endast ett fåtal av projektets totala beroenden, vilket gör att skillnaden i `npm ci`-tid och jobbets exekveringstid är försumbar mellan körningarna (variationer beror främst på tillfällig belastning i GitHub Actions). 
+
+Den primära vinsten med borttagandet är istället en mindre Docker-image samt att bygg-, lint- och typkontrollstegen inte längre behöver hantera oanvänd React-kod. För att verifiera storleksskillnaden på containerbilderna är `docker image ls` ett mer relevant mätvärde än körtid i CI.
+
 ## Felsökning
 
 ### JWT_SECRET måste vara satt
