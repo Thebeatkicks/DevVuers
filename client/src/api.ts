@@ -16,7 +16,10 @@ export const post = async <T>(path: string, body: unknown): Promise<T> => {
   const res = await fetch(`${API_URL}${path}`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
+    credentials: "include",
     body: JSON.stringify(body),
   });
-  return res.json() as Promise<T>;
+  const data = await res.json().catch(() => null);
+  if (!res.ok) throw new Error(data?.error ?? `API svarade ${res.status}`);
+  return data as T;
 };

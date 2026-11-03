@@ -38,6 +38,12 @@ export interface LoginRequest {
   password_hash: string
 }
 
+export interface RegisterRequest {
+  email: string
+  password_hash: string
+  display_name: string
+}
+
 export interface LoginResponse {
   token: string
   user: User

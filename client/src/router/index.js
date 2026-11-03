@@ -5,6 +5,8 @@ import GuideDetails from "../views/GuideDetails.vue";
 import ToursView from "@/views/ToursView.vue";
 import TourDetail from "@/views/TourDetail.vue";
 import ProfileView from "@/views/ProfileView.vue";
+import RegisterView from "@/views/RegisterView.vue";
+import LoginView from "@/views/LoginView.vue";
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -43,9 +45,19 @@ const router = createRouter({
       component: TourDetail,
     },
     {
-      path: "/profil",
+      path: "/login",
+      name: "logga in",
+      component: LoginView,
+    },
+    {
+      path: "/profile",
       name: "profil",
       component: ProfileView,
+    },
+    {
+      path: "/register",
+      name: "registrera",
+      component: RegisterView,
     },
   ],
 });
