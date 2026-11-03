@@ -1,12 +1,6 @@
 ## Skuld
 
-Måste ha denna struktur
-1 	***Vad***: Klienten hämtar data på två olika sätt 	
-    ***Var***: web/src/pages/Guides.jsx rad 9 (rå fetch), web/src/pages/Home.jsx rad 14 (via api.js) 	
-    ***Varför det är ett problem***: API-adressen och felhanteringen måste ändras på flera ställen, och det är lätt att missa ett 	
-    ***Allvar***: Medel
-
-Förutom det uppenbara att projektet ska göras i VUE så har vi hittat:
+Kvarvarande teknisk skuld och ett fåtal M6-poster som nyligen åtgärdats. Poster om den borttagna gamla klienten är rensade ur den aktuella inventeringen.
 
 1.  Vad: Lösenord hashas inte och lagras med plaintext, bcrypt är ett bättre alternativ
     Var: api/routes/auth.js rad 12
@@ -23,52 +17,21 @@ Förutom det uppenbara att projektet ska göras i VUE så har vi hittat:
     Varför det är ett problem: Ingen funktionell påverkan, men ger ett oprofessionellt/ofärdigt intryck.
     Allvar: Låg
 
-4.  Vad: Deployment instruktioner saknas. README.md hänvisar bara till att fråga Markus istället för att dokumentera processen.
-    Var: /README.md rad 23
-    Varför det är ett problem: Applikationen är beroende av att Markus är tillgänglig vid deployment. Det finns ingen dokumenterad väg framåt, vilket kan blockera releaser helt. Det gör det även svårt att onboarda nya utvecklare eller skala teamet, och ökar risken för felkonfiguration om kunskapen inte finns tillgänglig.
-    Allvar: Hög
+4.  Vad: Deployment-instruktioner saknades.
+    Status: Åtgärdad i M6. README beskriver lokal körning och staging; pipeline- och hostingbeslut finns i `docs/pipeline.md` och `docs/decisions/hosting.md`.
 
-5.  Vad: README anger felaktigt startkommando (npm start)
-    Var: /README.md rad 11
-    Varför det är ett problem: Följer man instruktionerna i README fungerar inte uppstarten. Man behver då undersöka package.json eller fråga någon vilket gör onboarding svårare.
-    Allvar: Medel/Låg
+5.  Vad: README:s startinstruktioner var felaktiga.
+    Status: Åtgärdad. README anger att API-workspacet har eget startkommando och beskriver Compose-starten.
 
-6.  Vad: Query-parametrar byggs manuellt istället för URLSearchParams
-    Var: web/src/pages/Guides.jsx, rad 15
-    Varför det är ett problem: Specialtecken i sökningen kan försvinna eller feltolkas i requesten eftersom värdet inte URL-encodas.
-    Allvar: Medel
+6.  Vad: Compose-konfigurationen hade databasuppgifter direkt i filen.
+    Status: Åtgärdad i M6. Lokala inställningar läses från den gitignorerade `api/.env`; `.env.example` innehåller utvecklingsvärden.
 
-7.  Vad: Docker-compose.dev.yml har alla uppgifter satta direkt i filen. Den bör istället kopplas till .env där uppfiterna sitter i variablar istället {DATABASE_URL}
-    Var: /docker-compose.dev.yml rad 7,8 och 9
-    Varför det är ett problem: Känsliga uppgifter (som lösenord, URL:er) syns direkt i filen och riskerar att läcka om filen delas eller hamnar i git.
-    Allvar: Hög
+7.  Vad: JWT-hemlighet låg tidigare hårdkodad i API-konfigurationen.
+    Status: Åtgärdad i M6. API-konfigurationen kräver `JWT_SECRET` från miljön. Azure-värdet skapas slumpmässigt vid staginguppsättning och lagras som Container Apps secret. Det historiska värdet återges inte här.
+    Var: `api/src/config.js`, `infra/azure/staging.yaml`
+    Allvar: Hög (historisk risk; värdet har roterats)
 
-8.  Vad: Tours har en annan struktur i sin useEffect än övriga API-calls.
-    Var: web/src/pages/tours.jsx  rad 10
-    Varför det är ett problem: Inkonsekvent kodstruktur gör koden svårare att läsa och underhålla.
-    Allvar: Låg
-
-9.  Vad: Token sparas i localstorage
-    Var: web/src/pages/Login.jsx rad 18
-    Varför det är ett problem: Token i localStorage kan stjälas via XSS-attacker, till skillnad från httpOnly-cookies som JavaScript inte kan läsa.
-    Allvar: Hög
-
-10. Vad: JWS i config.   jwtSecret: 'utpost-super-secret-2021',
-    Var: api/config.js, rad 3,4,5 och 6
-    Varför det är ett problem: Hårdkodade hemligheter hamnar i git-historiken och kan läsa av vem som helst med tillgång till koden, vilket gör det lätt att förfalska tokens eller läcka andra secrets.
-    Allvar: Hög
-
-11. Vad: Komponenten PrimaryButton.jsx används inte någonstans i projektet. Det är en död komponent
-    Var: web/src/components/PrimaryButton.jsx
-    Varför det är ett problem: Den används ingenstans och onödig kod kan förvirra utvecklare som inte vet om den är säker att ta bort.
-    Allvar: Låg
-
-12. Vad: Inkonsekventa knapp mönster och en klasskomponent bland funktionella komponenter
-    Var: button.jsx (inline style), PrimaryButton.jsx (klasskomponent + css-klass), Login.jsx:29 (className direkt)
-    Varför det är ett problem: Tre parallella sätt att göra samma UI-element gör varje styling-ändring till en sökning i flera filer. PrimaryButton.jsx är dessutom en klasskomponent medan resten av kodbasen använder funktionella komponenter med hooks vilket bryter mönstret i projektet.
-    Allvar: Medel
-
-13. Vad: Endpointen hämtar alla turer med 1 fråga och loopar sedan över varje tur. För varje tur körs separata frågor mot photos, tour_logs, users och guides.
+8.  Vad: Endpointen hämtar alla turer med 1 fråga och loopar sedan över varje tur. För varje tur körs separata frågor mot photos, tour_logs, users och guides.
     Var: /api/tours, båda GET anropen på rad 7 och rad 29.
     Varför det är ett problem: Antalet frågor växer linjärt med antalet turer (2 000 turer ≈ 7 450 frågor). Det ger långsammare svar, högre databasbelastning och sämre skalbarhet, speciellt när datan växer. Svarstiden är i snitt 279 ms (min 244, max 320), 5 mätningar, lokalt, 200 turer.
     Allvar: Hög

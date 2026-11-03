@@ -19,11 +19,11 @@ och klientens frågor till `client/src/gql/`.
 - Docker Desktop.
 - En lokal `api/.env` med `JWT_SECRET` och databasinställningar.
 
-Kopiera `api/.env.example` till `api/.env` om filen inte redan finns.
-I PowerShell:
+För Node-processen i API-workspacet, kopiera `.env.example` från repots rot till `api/.env`. Om du använder Docker Compose, kopiera den också till `.env` i repots rot: Compose läser rotfilen för variabelinterpolering. Båda filerna ignoreras av Git. I PowerShell:
 
 ```powershell
-Copy-Item api/.env.example api/.env
+Copy-Item .env.example api/.env
+Copy-Item .env.example .env
 ```
 
 Fyll i miljövariablerna innan API:et startas. `.env` är ignorerad
@@ -146,16 +146,60 @@ Se [databasbeslutet](docs/decisions/databas.md).
 
 ## Tester och pipeline
 
-Pipelinen har fyra jobb:
+Pipelinen har fyra kontroller före merge och ett Deploy-jobb efter merge till `main`:
 
 - **Kvalitet:** lint, formatering, klienttester,
   API-konfigurationstester och typkontroll.
 - **Bygg:** bygger applikationen och sparar `client/dist`.
 - **Integration:** kör API-tester mot Postgres och MongoDB.
 - **Image:** bygger containerbilder och publicerar dem på main.
+- **Deploy → Azure staging:** efter merge uppdaterar staging med commitens images, verifierar health-SHA och kör ett GraphQL-smoketest. Det är inte en status check på pull requests.
 
 Se [pipelinebeskrivningen](docs/pipeline.md) och
 [teststrategin](docs/testing.md).
+
+## Konfiguration och hemligheter (M6)
+
+`.env.example` i repots rot listar miljövariablerna och innehåller bara lokala utvecklingsvärden. För lokal utveckling kopieras den till den gitignorerade `api/.env`. `api/src/config.js` läser `JWT_SECRET` från miljön och vägrar starta om den saknas; API-adresserna i koden har endast lokala standardvärden. Klientens nginx använder `API_UPSTREAM` från miljön: `api:4000` i Compose och `localhost:4000` i Azure.
+
+`infra/azure/skapa-staging.sh` skapar ett slumpmässigt JWT-värde och databaslösenord när staging sätts upp och skickar dem till Azure Container Apps secrets (`jwt-secret` och `db-password`). Värdena skrivs inte till repo-filer och ska inte kopieras till dokumentationen. GitHub-miljön `azure-staging` innehåller sex Azure-ID-/konfigurationsvariabler och inga GitHub secrets. GitHub Actions loggar in med OIDC.
+
+Historiken för API-konfigurationen visar att den hårdkodade nyckeln först fanns i `da7a125` (17 september 2026) och togs bort ur `api/src/config.js` i `2f223b6` (8 oktober 2026). Den nya stagingnyckeln ligger i Azure Container Apps secret `jwt-secret`; själva värdet dokumenteras inte. Värdet hade även dokumenterats i en äldre skuldpost, så det repo-breda historiksöket visar den dokumentationshistoriken också. Historiken skrivs inte om; kontrollera aktuella filer separat.
+
+## I molnet (M6)
+
+**Staging:** [öppna Utpost](https://utpost-staging.livelystone-51f31c82.swedencentral.azurecontainerapps.io/). Azure Container App `utpost-staging` körs i `swedencentral`, resursgruppen `utpost-henrik-martini-rg`, med fyra containrar: nginx-klient, API, Postgres och MongoDB. Endast nginx har publik HTTPS-ingress. Staging skalar till noll och databaserna har ingen beständig volym; en tom databas seedas vid start.
+
+**Boot-bevis från Azure-loggen:**
+
+```text
+boot: väntar på Postgres (1/30): connect ECONNREFUSED 127.0.0.1:5432
+boot: väntar på Postgres (2/30): connect ECONNREFUSED 127.0.0.1:5432
+boot: väntar på Postgres (3/30): connect ECONNREFUSED 127.0.0.1:5432
+boot: tom databas – seedar
+Seed klar: 12 användare, 40 guider, 200 turer, 5920 loggpunkter.
+Förberedda dokument: 200, mätpunkter: 5920
+Postgres: 200 turer
+Postgres: 5920 mätpunkter
+```
+
+**Deploy-bevis:** PR [#97](https://github.com/Thebeatkicks/DevVuers/pull/97) hade Deploy överhoppat och de fyra vanliga kontrollerna gröna. Efter merge var [main-körning 41630187005](https://github.com/Thebeatkicks/DevVuers/actions/runs/41630187005) grön med alla fem jobb; Deploy tog 1 min 23 s och hela körningen 2 min 30 s.
+
+Den publika `/api/health` svarade med HTTP 200:
+
+```json
+{"ok":true,"sha":"8ca7b318496bd1a28b4d3dad53c2178cc3e5c412","postgres":{"ok":true},"mongoDb":{"ok":true}}
+```
+
+Azure rapporterade dessa revisioner:
+
+| Revision | Tillstånd | Betydelse |
+|---|---|---|
+| `utpost-staging--k024z1j` | Healthy, Stopped | Tidigare version före M6-deploy |
+| `utpost-staging--sha-8ca7b31-api` | Healthy, Stopped | Mellanrevision efter API-uppdatering |
+| `utpost-staging--sha-8ca7b31` | Healthy, aktiv, 1 replica | Slutrevision med API och klient |
+
+Första health-försöket efter deployen gav tillfälligt 502; efter väntan svarade health med 200 och rätt SHA. Pipeline-jobbet verifierade SHA och GraphQL-data. Den första uppmätta health-svarstiden tidigare i arbetet var 0,066 sekunder efter att appen redan var startad, så den är inte ett kallstartsmått. Den kontrollerade kallstartstiden ska mätas från noll replicas och dokumenteras i [hostingbeslutet](docs/decisions/hosting.md).
 
 ## Mätningar M4
 
@@ -326,4 +370,4 @@ Det försöket ersätter inte försöket med ett borttaget schemafält.
 
 ## Skuldinventering
 
-Se [docs/debt.md](docs/debt.md). 
+Se [docs/debt.md](docs/debt.md).

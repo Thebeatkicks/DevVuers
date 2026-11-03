@@ -1,17 +1,16 @@
 # Teststrategi för Utpost
 
-Uppdaterad för M5, 23 oktober 2026.
+Uppdaterad för M6, 3 november 2026.
 
 ## Inriktning och bakgrund
 
 Vi testar beräkningar, användarbeteenden och API:ets data
 och behörighet.
 
-Utpost har en Vue-klient, en äldre React-klient och ett
-Express-/GraphQL-API med Postgres och MongoDB.
+Utpost har en Vue-klient och ett Express-/GraphQL-API med
+Postgres och MongoDB.
 
 Automatiserade tester fokuserar på Vue-klienten och API:et.
-React-klienten är inte täckt av de testsviter som beskrivs här.
 
 ## Testnivåer
 
