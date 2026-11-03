@@ -27,6 +27,8 @@ flowchart TD
   REVIEW --> MERGE[Merge till uppdaterad main]
   MERGE --> MAIN[Ny CI-körning på main]
   MAIN --> GHCR[Publicering av containerbilder]
+  GHCR --> DEPLOY[Deploy till Azure staging]
+  DEPLOY --> VERIFY[Health-SHA och GraphQL-smoketest]
 ```
 
 Image-jobbet väntar på Kvalitet och Bygg.
@@ -37,15 +39,22 @@ Integration kör parallellt och krävs separat före merge.
 | Jobb | Vad det kör | Vad det fångar |
 |---|---|---|
 | Kvalitet | npm ci, lint, formatkontroll, klienttester, API-konfigurationstester och typecheck | Stilfel, testfel och typfel |
-| Bygg | npm ci och npm run build | Fel i bygget av web och client |
+| Bygg | npm ci och npm run build | Fel i bygget av Vue-klienten |
 | Integration | Databasservices, npm ci, seed, migrering och test:api | Fel i GraphQL, databasåtkomst, N+1 och inloggningskrav |
 | Image | Bygger API- och klientimages | Fel i Docker-byggena |
+| Deploy → Azure staging | Efter grön Image och Integration på push till `main`; OIDC-inloggning, uppdaterar API- och klientimage, väntar på rätt health-SHA och röktestar GraphQL | Fel i deploy, revisionens start, konfiguration eller databassvar |
 
 Bygg laddar upp `client/dist` som artifact.
 
 På pull requests bygger Image utan att publicera.
 På main publiceras API- och klientimages till GHCR med
 SHA-tagg och `latest`.
+
+Deploy bygger inga images. Det använder de SHA-taggade images som Image-jobbet byggde från samma commit. Jobbet behöver både Image och Integration, kör endast efter push till `main`, och använder GitHub-miljön `azure-staging` samt OIDC (`id-token: write`). Azure-ID:n ligger som miljövariabler i GitHub; inga GitHub secrets behövs för Azure-inloggningen.
+
+Jobbet uppdaterar först API-containern och sedan klientcontainern i Azure Container App. Varje uppdatering skapar en revision. Därefter väntar jobbet tills Azure rapporterar att senaste revision är redo och `/api/health` svarar med workflowens fullständiga commit-SHA. Till sist skickar det en GraphQL-fråga genom nginx och kräver minst en tur från databasen.
+
+Deploy är **inte** en status check som kan godkännas före merge. På en pull request hoppas jobbet över. Det körs efter merge, på den commit som faktiskt hamnade på `main`; om Deploy misslyckas blir staging inte uppdaterad även om själva merge-committen ligger kvar på `main`.
 
 ## Kvalitet
 
@@ -150,20 +159,34 @@ status innan den används som färdigt bevis. Den ska inte mergas.
 
 [Temporär test-PR #83](https://github.com/Thebeatkicks/DevVuers/pull/83)
 
-### Jämförelse vid borttagandet av web/
+### Jämförelse av `npm ci` före och efter borttagandet av `web/`
 
-Mätning av körtider i CI före och efter att `web/`-mappen togs bort:
+Tiderna är stegtiderna från GitHub Actions-jobbloggarna, avrundade till hela sekunder. Före-mätningen är main-körning 41037122902, före PR #96; efter-mätningen är main-körning 41629682887, efter PR #96.
 
-| Jobb | Moment som mätts | Före | Efter |
-| --- | --- | --- | --- |
-| Kvalitet | Lint, formatering, klienttester, API-konfigtester, typkontroll | 6 s | 8 s |
-| Bygg | Bygger Vue-klienten och sparar `client/dist` | 7 s | 9 s |
-| Integration | API-tester mot Postgres och MongoDB | 5 s | 9 s |
+| Jobb | Före (`npm ci`) | Efter (`npm ci`) |
+| --- | ---: | ---: |
+| Kvalitet | 7 s | 24 s |
+| Bygg | 6 s | 27 s |
+| Integration | 8 s | 28 s |
 
-**Tolkning**
-Paketen i `web/` utgjorde endast ett fåtal av projektets totala beroenden, vilket gör att skillnaden i `npm ci`-tid och jobbets exekveringstid är försumbar mellan körningarna (variationer beror främst på tillfällig belastning i GitHub Actions). 
+- [Före: main-körning 41037122902](https://github.com/Thebeatkicks/DevVuers/actions/runs/41037122902)
+- [Efter: main-körning 41629682887](https://github.com/Thebeatkicks/DevVuers/actions/runs/41629682887)
 
-Den primära vinsten med borttagandet är istället en mindre Docker-image samt att bygg-, lint- och typkontrollstegen inte längre behöver hantera oanvänd React-kod. För att verifiera storleksskillnaden på containerbilderna är `docker image ls` ett mer relevant mätvärde än körtid i CI.
+Det här är en observation från en körning på vardera sidan, inte ett stabilt prestandatest. Stegtiderna blev längre efter ändringen, vilket visar att runnerbelastning och nätverk påverkar mätningen. Vi drar därför ingen slutsats om att `npm ci` blev snabbare; mätningen dokumenterar vad de två jobbloggarna faktiskt visar.
+
+### M6 Deploy på main
+
+PR #97 visade Deploy som överhoppat medan de fyra vanliga kontrollerna passerade. Efter merge körde [main-workflowen 41630187005](https://github.com/Thebeatkicks/DevVuers/actions/runs/41630187005) alla fem jobb gröna. Deploy tog 1 min 23 s; hela workflowen tog 2 min 30 s.
+
+Health svarade med HTTP 200 och samma SHA som workflowens `headSha`: `8ca7b318496bd1a28b4d3dad53c2178cc3e5c412`. GraphQL-smoketestet returnerade minst en tur. Revisionerna i Azure var:
+
+| Revision | Status | Roll |
+|---|---|---|
+| `utpost-staging--k024z1j` | Healthy, Stopped | Före M6-deployen |
+| `utpost-staging--sha-8ca7b31-api` | Healthy, Stopped | Mellanrevision efter API-uppdatering |
+| `utpost-staging--sha-8ca7b31` | Healthy, aktiv, 1 replica | Slutrevision med API och klient |
+
+Deploy-loggen verifierar health-SHA och GraphQL; den manuella health-kontrollen verifierade även Postgres och MongoDB som friska. Se README:s [M6-bevis](../README.md#i-molnet-m6).
 
 ## Felsökning
 
@@ -195,4 +218,4 @@ Kontrollera skillnader i miljövariabler, databasportar,
 seedning, migrering och committade filer.
 
 Se [teststrategin](testing.md) för lokal körning och
-[README](../README.md) för M5-bevisen.
+[README](../README.md) för M5- och M6-bevisen.
