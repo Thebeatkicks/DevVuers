@@ -3,6 +3,7 @@ import { ref, computed, watchEffect } from "vue";
 import { useRoute } from "vue-router";
 import type { Tour, TourLog } from "@utpost/shared";
 import { elevationGain } from "../lib/tours";
+import PhotoUpload from "./PhotoUpload.vue";
 
 // Tour från kontraktet, plus mätpunkterna som API:et skickar med
 type TourWithLogs = Tour & { logs: TourLog[] };
@@ -49,6 +50,7 @@ const climb = computed<number>(() =>
         {{ log.elevation_m ?? "–" }} m · {{ log.heart_rate ?? "–" }} slag/min
       </li>
     </ol>
+    <PhotoUpload :tour-id="tourDetails.id" />
   </div>
 </template>
 
