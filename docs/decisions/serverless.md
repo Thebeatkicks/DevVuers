@@ -4,17 +4,28 @@
 **Beslut:** *(en eller två meningar: vad flyttade ni ut ur API:et, vart, och med vilket verktyg skapas och deployas det?)*
 
 ## Bakgrund
-*Skuld 8: bilduppladdningen skalade om bilder i request-tråden – "timeouts vid last". Vad gjorde `POST /api/photos` före M7 (`resize`, fyra storlekar, signatur), och varför drabbade det alla andra anrop och inte bara uppladdningen? Klistra in före-siffrorna från mätskriptet här eller i tabellen nedan.*
+I detta moment löser vi Skuld 8: bilduppladdningen skalade om bilder i request-tråden – "timeouts vid last". Vi ska undersöka vad `POST /api/photos` gjorde före M7 (`resize`, fyra storlekar, signatur), och varför det drabbade alla andra anrop och inte bara uppladdningen.
 
 ## Alternativ vi jämförde
-*Minst tre riktiga alternativ. **Serverless Framework ska vara ett av dem:** vad det är (`serverless.yml` med service, provider, functions, events; `sls deploy`), varför det inte går här (vilka moln stöder v4, vad hände med v3?), och när det hade passat. Förslag på fler: plattformens egna verktyg (Azure Functions Core Tools + `az`, det vi gjorde) · AWS Lambda med SAM · Google Cloud Run functions · Terraform/Pulumi för resurserna · en kö + en worker i API-containern · behålla koden i tråden (och vad som då händer vid last).*
+Vi jämförde Serverless Framework, Azure Functions Core Tools ihop med Azure CLI och AWS Lambda med SAM. 
+
+Serverless Framework beskriver funktioner, triggers och resurser i en serverless.yml och deployas med sls deploy. Verktyget erbjuder en gratis plan för små organisationer men kräver licens och medför en molnkostand för större. Det har enkel YAML-syntax, ett stort ekosystem och fungerar bra mot AWS. Däremot fungerar inte v4 mot Azure och v3 med dess community-plugin för Azure underhålls inte längre. Det hade passat om vi kört AWS Lambda och velat ha en enkel, gemensam konfiguration för många funktioner.
+
+Azure Functions Core Tools med Azure CLI är Microsofts egna verktyg. Det ger officiellt stöd, bra lokal utveckling med func start och en förbrukningsplan där de första miljonerna anrop per månad är gratis. Nackdelen är att deployen blir mer manuell och skriptad, och att vi blir låsta till Azure.
+
+AWS Lambda med SAM är en mogen plattform med bra integrationer, och SAM kräver mindre manuellt underhåll än Azure-alternativet. Det kräver dock ett AWS-konto och en migrering av vår nuvarande setup.
 
 | Alternativ | Vad ändras i repot | Kostnad | För | Emot |
 |---|---|---|---|---|
-| | | | | |
+| Serverless Framework | `serverless.yml`, `sls deploy` | Gratis för små organisationer, licens för större, plus molnkostnad | Enkel YAML, stort ekosystem, bra mot AWS | v4 fungerar inte mot Azure, v3 underhålls inte, licenskrav |
+| Azure Functions Core Tools + Azure CLI | `host.json`, funktionsdefinitioner, deploy-skript med `az` | Förbrukningsplan, första miljonen anrop per månad gratis | Officiellt stöd, bra lokal utveckling, vi är redan på Azure | Låser oss till Azure, mer manuell deploy |
+| AWS Lambda + SAM | `template.yaml`, handler-kod | Första miljonen anrop per månad gratis | Mogen plattform, bra integrationer, mindre manuellt underhåll | Kräver AWS-konto och migrering |
 
 ## Motivering
-*Varför det här valet för Utpost just nu? Knyt till mätningen och till vad ni redan har (staging i Azure, OIDC-identiteten från M6, pipelinen).*
+
+Vi valde Azure Functions Core Tools med Azure CLI. Främst för att vår container app redan ligger i Azure, och för att Azure är den resurs som i dagsläget finns tillgänglig för oss. Det gav minst friktion. Priset är att vi blir låsta till Azure.
+
+AWS Lambda med SAM hade varit ett minst lika bra alternativ. Det har bra integrationer och kräver mindre manuellt underhåll än Azure Functions. Det hade dock inneburit att vi behövde skaffa och sätta upp ett AWS-konto.
 
 ## Mätning före/efter
 Mätningarna kördes 2026-11-09 lokalt på samma dator, med samma antal uppladdningar och samma bildstorlek före och efter. Kommandot var `node scripts/mat-upload.mjs --n 10 --size 4000x3000` (alternativt `npm run mat -- --n 10`). Skriptet skickar 10 samtidiga uppladdningar à 4000x3000 och anropar health var 100:e ms under tiden.
@@ -40,58 +51,12 @@ det som var problemet i skuld 8 ("timeouts vid last").
 Raden sparas i databasen innan funktionen anropas. Om funktionen är nere får klienten 502, men raden finns kvar utan varianter. Det är ett medvetet val i uppgiften men något att hantera senare (t.ex. omförsök eller städning).
 
 ## Kallstart
-*Första anropet efter minst 20 minuters paus (`curl -w '%{time_total}'`, svaret säger `"coldStart": true`) och andra anropet direkt efter. Mät inte direkt efter en deploy – då är funktionen redan varm.*
+För att kontrollera vad kallstarten kan innebära för projektet genomfördes två anrop efter en 20 minuters paus. Detta gjordes för att vi skulle få en tydligare bild kring vad det skulle kosta. Andra anropet genomfördes direkt efter det första. 
 
 | Anrop | Tid (curl) | `processingMs` | `coldStart` | `instance` |
 |---|---|---|---|---|
-| Första efter paus ( min) | | | | |
-| Andra | | | | |
-
-*Duger det för en bilduppladdning? Vad skulle ni göra om det inte dög (always-ready, mindre paket, varmhållning – och vad kostar det)?*
-
-## Var koden bor och vad som låser
-*Vad är portabelt och vad är det inte? `functions/src/image.js` vet ingenting om Azure. `process-image.js` (`app.http`, `@azure/functions`), `host.json`, `local.settings.json`, `skapa-funktion.sh` och deploysteget i `ci.yml` är Azure. Om ni flyttade till AWS Lambda eller Cloud Run functions i morgon: vilka filer skrivs om, och vilka följer med oförändrade?*
-
-## Konsekvenser
-*Vad kostar valet? Pris per körning och per GB-s, gratiskvoten, vad always-ready kostar per timme. Funktionsnyckeln: var finns den (Azure, staging-appens secret – aldrig i repot eller GitHub), hur roteras den? Två deployjobb i stället för ett. Vem i teamet har tillgång till function-appen i portalen?*
-
-**Skrivet av:**
-änt Serverless Framework förstår vad det är och varför ni valde som ni gjorde. Det är också underlaget för kunskapsloggens post v.45.*
-
-**Datum:** 09-11-2026
-**Beslut:** *(en eller två meningar: vad flyttade ni ut ur API:et, vart, och med vilket verktyg skapas och deployas det?)*
-
-## Bakgrund
-*Skuld 8: bilduppladdningen skalade om bilder i request-tråden – "timeouts vid last". Vad gjorde `POST /api/photos` före M7 (`resize`, fyra storlekar, signatur), och varför drabbade det alla andra anrop och inte bara uppladdningen? Klistra in före-siffrorna från mätskriptet här eller i tabellen nedan.*
-
-## Alternativ vi jämförde
-*Minst tre riktiga alternativ. **Serverless Framework ska vara ett av dem:** vad det är (`serverless.yml` med service, provider, functions, events; `sls deploy`), varför det inte går här (vilka moln stöder v4, vad hände med v3?), och när det hade passat. Förslag på fler: plattformens egna verktyg (Azure Functions Core Tools + `az`, det vi gjorde) · AWS Lambda med SAM · Google Cloud Run functions · Terraform/Pulumi för resurserna · en kö + en worker i API-containern · behålla koden i tråden (och vad som då händer vid last).*
-
-| Alternativ | Vad ändras i repot | Kostnad | För | Emot |
-|---|---|---|---|---|
-| | | | | |
-
-## Motivering
-*Varför det här valet för Utpost just nu? Knyt till mätningen och till vad ni redan har (staging i Azure, OIDC-identiteten från M6, pipelinen).*
-
-## Mätning före/efter
-*`node scripts/mat-upload.mjs --n <N> --size 4000x3000` (eller `npm run mat -- --n <N>`). **Före** = bildkoden i API:et, **efter** = API:et anropar funktionen. Samma dator, samma N, samma bildstorlek. Skriv vilket N ni använde och varför.*
-
-| Mätning | Uppladdning p50 | Uppladdning max | Health p50 | Health max | Total tid |
-|---|---|---|---|---|---|
-| Före, lokalt (N = ) | | | | | |
-| Efter, lokalt (N = ) | | | | | |
-| Efter, staging (N = ) | | | | | |
-
-*Vad blev snabbare – och vad blev det inte? Varför?*
-
-## Kallstart
-*Första anropet efter minst 20 minuters paus (`curl -w '%{time_total}'`, svaret säger `"coldStart": true`) och andra anropet direkt efter. Mät inte direkt efter en deploy – då är funktionen redan varm.*
-
-| Anrop | Tid (curl) | `processingMs` | `coldStart` | `instance` |
-|---|---|---|---|---|
-| Första efter paus ( min) | | | | |
-| Andra | | | | |
+| Första efter paus (20 min) | 1,01 s | 80 ms | true | 3--22aba31d-3212-43b9-b332-a108bedab9b9 |
+| Andra | 0,35 s | 81 ms | false | 3--22aba31d-3212-43b9-b332-a108bedab9b |
 
 *Duger det för en bilduppladdning? Vad skulle ni göra om det inte dög (always-ready, mindre paket, varmhållning – och vad kostar det)?*
 
