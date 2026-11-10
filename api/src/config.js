@@ -11,4 +11,6 @@ export const config = {
   gitSha: process.env.GIT_SHA || 'dev',
   port: 4000,
   uploadDir: './uploads',
+  imageFunctionUrl: process.env.IMAGE_FUNCTION_URL || 'http://localhost:7071/api/process-image',
+  imageFunctionKey: process.env.IMAGE_FUNCTION_KEY || '',
 }
