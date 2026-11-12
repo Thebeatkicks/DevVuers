@@ -29,6 +29,8 @@ flowchart TD
   MAIN --> GHCR[Publicering av containerbilder]
   GHCR --> DEPLOY[Deploy till Azure staging]
   DEPLOY --> VERIFY[Health-SHA och GraphQL-smoketest]
+  MAIN --> DEPLOY_FN[Deploy till Azure Functions]
+  DEPLOY_FN --> VERIFY_FN[Röktest av process-image]
 ```
 
 Image-jobbet väntar på Kvalitet och Bygg.
@@ -43,6 +45,7 @@ Integration kör parallellt och krävs separat före merge.
 | Integration | Databasservices, npm ci, seed, migrering och test:api | Fel i GraphQL, databasåtkomst, N+1 och inloggningskrav |
 | Image | Bygger API- och klientimages | Fel i Docker-byggena |
 | Deploy → Azure staging | Efter grön Image och Integration på push till `main`; OIDC-inloggning, uppdaterar API- och klientimage, väntar på rätt health-SHA och röktestar GraphQL | Fel i deploy, revisionens start, konfiguration eller databassvar |
+| Deploy → Azure Functions | Efter grön Kvalitet på push till `main`; `npm ci --omit=dev` i `functions/`, OIDC-inloggning, publicerar `functions/` till Azure Functions och röktestar `/api/process-image` | Fel i funktionsdeploy, konfiguration, funktionsnyckel eller svar från `process-image` |
 
 Bygg laddar upp `client/dist` som artifact.
 
@@ -55,6 +58,8 @@ Deploy bygger inga images. Det använder de SHA-taggade images som Image-jobbet 
 Jobbet uppdaterar först API-containern och sedan klientcontainern i Azure Container App. Varje uppdatering skapar en revision. Därefter väntar jobbet tills Azure rapporterar att senaste revision är redo och `/api/health` svarar med workflowens fullständiga commit-SHA. Till sist skickar det en GraphQL-fråga genom nginx och kräver minst en tur från databasen.
 
 Deploy är **inte** en status check som kan godkännas före merge. På en pull request hoppas jobbet över. Det körs efter merge, på den commit som faktiskt hamnade på `main`; om Deploy misslyckas blir staging inte uppdaterad även om själva merge-committen ligger kvar på `main`.
+
+`Deploy → Azure Functions` körs också endast vid push till `main` (och hoppas över på pull requests). Det väntar på `Kvalitet`, installerar funktionens beroenden i `functions/`, loggar in i Azure med OIDC, publicerar paketet till `AZURE_FUNCTION_APP` och kör ett röktest mot `/api/process-image` med funktionsnyckeln.
 
 ## Kvalitet
 
