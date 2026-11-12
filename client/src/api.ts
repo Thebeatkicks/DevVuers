@@ -1,3 +1,10 @@
+import { useSessionStore } from "./stores/session";
+
+function authHeaders(): Record<string, string> {
+  const { token } = useSessionStore();
+  return token ? { Authorization: `Bearer ${token}` } : {};
+}
+
 // Relativ adress: browsern frågar samma server som skickade sidan. I containern är det nginx
 // (client/nginx.conf), i utveckling Vites dev-server (proxy i vite.config.js). Båda skickar vidare till API:et.
 export const API_URL = "/api";
@@ -5,7 +12,9 @@ export const API_URL = "/api";
 // Generisk: anroparen säger vilken typ svaret har – `get<Guide[]>('/guides')`.
 // Typen kommer från @utpost/shared, samma fil som API:et använder.
 export const get = async <T>(path: string): Promise<T> => {
-  const res = await fetch(`${API_URL}${path}`);
+  const res = await fetch(`${API_URL}${path}`, {
+    headers: authHeaders()
+  });
   if (!res.ok) throw new Error(`API svarade ${res.status}`);
   return res.json() as Promise<T>;
 };
@@ -15,7 +24,10 @@ export const get = async <T>(path: string): Promise<T> => {
 export const post = async <T>(path: string, body: unknown): Promise<T> => {
   const res = await fetch(`${API_URL}${path}`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: {
+      "Content-Type": "application/json",
+      ...authHeaders(),
+    },
     credentials: "include",
     body: JSON.stringify(body),
   });

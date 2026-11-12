@@ -13,8 +13,8 @@ onMounted(() => session.clearError());
 const onSubmit = async () => {
   await session.register({
     email: email.value,
-    display_name: display_name.value,
-    password_hash: password_hash.value,
+    displayName: display_name.value,
+    password: password_hash.value,
   });
 };
 </script>

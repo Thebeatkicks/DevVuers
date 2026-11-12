@@ -25,23 +25,23 @@ export interface Tour {
 }
 
 export interface User {
-    id: number,
-    email: string,
-    password_hash: string, 
-    display_name: string, 
-    role: string, 
-    createdAt: string, 
+  id: number,
+  email: string,
+  password_hash: string,
+  display_name: string,
+  role: string,
+  createdAt: string,
 }
 
 export interface LoginRequest {
   email: string
-  password_hash: string
+  password: string
 }
 
 export interface RegisterRequest {
   email: string
-  password_hash: string
-  display_name: string
+  password: string
+  displayName: string
 }
 
 export interface LoginResponse {

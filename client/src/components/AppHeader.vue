@@ -19,7 +19,7 @@ const session = useSessionStore();
           <RouterLink to="/profil">Min sida</RouterLink>
           <BaseButton @click="session.logout">Logga ut</BaseButton>
         </template>
-        <RouterLink v-else to="/login">Logga in</RouterLink>
+        <RouterLink v-else to="/logga-in">Logga in</RouterLink>
       </nav>
     </div>
   </header>

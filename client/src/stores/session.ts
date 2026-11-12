@@ -13,9 +13,8 @@ import type {
 import router from "@/router";
 
 export const useSessionStore = defineStore("session", () => {
-  const storedUser = localStorage.getItem("user");
-  const user = ref<User | null>(storedUser ? JSON.parse(storedUser) : null);
-  const token = ref<string | null>(localStorage.getItem("token"));
+  const user = ref<User | null>(null);
+  const token = ref<string | null>(null);
   const errorParagraph = ref<string | null>(null);
   const loading = ref(false);
 
@@ -28,8 +27,6 @@ export const useSessionStore = defineStore("session", () => {
       const data = await apiLogin(req);
       user.value = data.user;
       token.value = data.token;
-      localStorage.setItem("token", data.token);
-      localStorage.setItem("user", JSON.stringify(data.user));
     } catch (error) {
       console.log(
         "Inloggningen misslyckades",
@@ -53,8 +50,6 @@ export const useSessionStore = defineStore("session", () => {
     } finally {
       user.value = null;
       token.value = null;
-      localStorage.removeItem("token");
-      localStorage.removeItem("user");
       await router.push("/");
     }
   }
@@ -66,8 +61,6 @@ export const useSessionStore = defineStore("session", () => {
       const data = await apiRegister(req);
       user.value = data.user;
       token.value = data.token;
-      localStorage.setItem("token", data.token);
-      localStorage.setItem("user", JSON.stringify(data.user));
       await router.push("/profil");
     } catch (error) {
       user.value = null;
