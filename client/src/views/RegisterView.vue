@@ -5,16 +5,16 @@ import BaseButton from "../components/BaseButton.vue";
 
 const session = useSessionStore();
 const email = ref<string>("");
-const display_name = ref<string>("");
-const password_hash = ref<string>("");
+const displayName = ref<string>("");
+const password = ref<string>("");
 
 onMounted(() => session.clearError());
 
 const onSubmit = async () => {
   await session.register({
     email: email.value,
-    display_name: display_name.value,
-    password_hash: password_hash.value,
+    displayName: displayName.value,
+    password: password.value,
   });
 };
 </script>
@@ -22,10 +22,10 @@ const onSubmit = async () => {
 <template>
   <form @submit="onSubmit" class="register">
     <h1>Skapa konto</h1>
-    <input v-model="display_name" placeholder="Visningsnamn" required />
+    <input v-model="displayName" placeholder="Visningsnamn" required />
     <input v-model="email" placeholder="E-post" required />
     <input
-      v-model="password_hash"
+      v-model="password"
       type="password"
       placeholder="Lösenord"
       required

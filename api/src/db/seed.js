@@ -1,6 +1,7 @@
 import { pool } from './client.js';
 import { createTables } from './migrate.js';
 import { pathToFileURL } from 'node:url';
+import { hashPassword} from '../lib/password.js'
 
 const REGIONS = ['Jämtland', 'Dalarna', 'Lappland', 'Bohuslän', 'Småland', 'Södermanland', 'Härjedalen', 'Skåne'];
 const DIFFICULTY = ['lätt', 'medel', 'svår'];
@@ -23,13 +24,18 @@ export const seed = async () => {
   await createTables();
   await pool.query('truncate photos, tour_logs, tours, guides, users restart identity');
 
+  const passwordHash = await hashPassword('hemligt123');
+
   const userIds = [];
   for (let i = 0; i < 12; i++) {
     const name = `${pick(FIRST)} ${pick(LAST)}`;
-    const email = `${name.toLowerCase().replace(' ', '.')}${i}@example.com`;
+    const email =
+      i === 0 ? 'redaktor@utpost.se'
+      : i === 1 ? 'medlem@utpost.se'
+      : `${name.toLowerCase().replace(' ', '.')}${i}@example.com`;
     const res = await pool.query(
       `insert into users (email, password_hash, display_name, role) values ($1,$2,$3,$4) returning id`,
-      [email, 'plaintext:hemligt123', name, i === 0 ? 'editor' : 'member'],
+      [email, passwordHash, name, i === 0 ? 'editor' : 'member'],
     );
     userIds.push(res.rows[0].id);
   }
