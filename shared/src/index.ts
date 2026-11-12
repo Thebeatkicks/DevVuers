@@ -109,9 +109,6 @@ export interface LoginRequest {
 }
 export interface LoginResponse {
   token: string
-  // OBS: i dag skickar API:et hela databasraden, inklusive password_hash.
-  // Typen säger User – verkligheten säger mer. TypeScript tar inte bort fält,
-  // det här är en säkerhetsskuld (skuld 9) som lagas i M8, inte här.
   user: User
 }
 

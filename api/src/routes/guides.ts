@@ -2,6 +2,9 @@ import { Router } from "express";
 import type { Request, Response } from "express";
 import type { Guide } from "@utpost/shared";
 import { pool } from "../db/client.js";
+import { validate } from "../lib/validate.js";
+import { wrap } from '../lib/wrap.js';
+import { searchSchema } from "../lib/schemas.js";
 
 export const guidesRouter = Router();
 
@@ -23,12 +26,13 @@ guidesRouter.get('/popular', async (req, res) => {
 });
 
 // Sök. Byggd i all hast inför lanseringen.
-guidesRouter.get('/search', async (req, res) => {
-  const q = req.query.q || '';
-  const sql = `select * from guides where title ilike '%${q}%' or region ilike '%${q}%'`;
-  const result = await pool.query(sql);
+guidesRouter.get('/search', validate(searchSchema), wrap( async (req: Request, res: Response<Guide[]>) => {
+  const {q} = (req as Request & {validQuery: {q: string}}).validQuery;
+  const result = await pool.query<Guide>(
+    `select * from guides where title ilike '%${q}%' or region ilike '%${q}%'`
+  );
   res.json(result.rows);
-});
+}));
 
 guidesRouter.get('/:slug', async (req, res) => {
   const result = await pool.query('select * from guides where slug = $1', [req.params.slug]);
