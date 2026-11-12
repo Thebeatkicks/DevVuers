@@ -20,7 +20,7 @@
     "@urql/vue": "^2.1.1",
     "@utpost/shared": "file:../shared",
     "graphql": "^16.14.2",
-    "pinia": "^4.0.3",
+    "pinia": "^4.1.0",
     "vue": "^3.5.40",
     "vue-router": "^5.2.0"
   },
