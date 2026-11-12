@@ -1,11 +1,11 @@
 import { Router } from 'express';
 import { pool } from '../db/client.js';
 import { sign, publicUser } from '../lib/auth.js';
-import {hashPassword, verifyPassword} from '../lib/auth.js';
+import {hashPassword, verifyPassword} from '../lib/password.js';
 import {validate} from '../lib/validate.js'
 import { wrap } from '../lib/wrap.js'
-import { loginSchema, registerSchema } from '../lib/schema.js'
-import { error } from 'console';
+import { loginSchema, registerSchema } from '../lib/schemas.js'
+
 
 
 export const authRouter = Router();
@@ -36,7 +36,7 @@ authRouter.post('/register',
     [email, passwordsHash, displayName],
   );
   const user = result.rows[0];
-  res.status(201).json({token: sign(user), use: publicUser(user)})
+  res.status(201).json({token: sign(user), user: publicUser(user)})
 } catch (err){
   if(err.code === '23505') return res.status(409).json({error: 'e-posten finns redan'})
   throw err

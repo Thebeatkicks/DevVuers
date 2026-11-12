@@ -3,7 +3,7 @@ import { pool } from '../db/client.js';
 import { requireUser, publicUser } from '../lib/auth.js';
 import {validate} from '../lib/validate.js'
 import {wrap} from '../lib/wrap.js'
-import { createTourSchema, idParam } from '../lib/schema.js'
+import { createTourSchema, idParam } from '../lib/schemas.js'
 
 export const toursRouter = Router();
 
@@ -31,7 +31,7 @@ toursRouter.get('/latest', wrap(async (req, res) => {
 
 toursRouter.get('/:id', wrap( async (req, res) => {
   const id = idParam.safeParse(req.params.id);
-  if(!id.success) return res.status(400).json({error: 'oglitigt id'})
+  if(!id.success) return res.status(400).json({error: 'ogiltigt id'})
   const tour = await pool.query('select * from tours where id = $1', [id.data]);
   if (!tour.rows[0]) return res.status(404).json({ error: 'hittades inte' });
   const logs = await pool.query('select * from tour_logs where tour_id = $1 order by recorded_at', [id.data]);
@@ -52,14 +52,14 @@ toursRouter.post('/', requireUser, validate(createTourSchema), wrap( async (req,
 toursRouter.delete('/:id', requireUser, wrap(async (req, res) => {
 
   const id = idParam.safeParse(req.params.id);
-  if(!id.success) return res.status(400).json({error: 'ogilitigt id'});
+  if(!id.success) return res.status(400).json({error: 'ogiltigt id'});
   const tour = await pool.query('select id, user_id from tours where id= $1', [id.data])
-  if(!tour.rows[0]) return res.status(400).json({error: 'hittades inte'});
-  if(tour.rows[0].users_id !== req.user.id && req.user.id !== 'editor'){
+  if(!tour.rows[0]) return res.status(404).json({error: 'hittades inte'});
+  if(tour.rows[0].user_id !== req.user.id && req.user.role !== 'editor'){
     return res.status(403).json({error: 'inte din tur'})
   }
   await pool.query('delete from tour_logs where tour_id = $1', [id.data]);
+  await pool.query('delete from photos where tour_id = $1', [id.data]);
   await pool.query('delete from tours where id = $1', [id.data]);
-  await pool.query('delete from photos where tour_id = $1', [id.data])
   res.json({ ok: true });
 }));

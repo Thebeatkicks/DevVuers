@@ -26,10 +26,11 @@ guidesRouter.get('/popular', async (req, res) => {
 });
 
 // Sök. Byggd i all hast inför lanseringen.
-guidesRouter.get('/search', validate(searchSchema), wrap( async (req: Request, res: Response<Guide[]>) => {
-  const {q} = (req as Request & {validQuery: {q: string}}).validQuery;
+guidesRouter.get('/search', validate(searchSchema, 'query'), wrap(async (req: Request, res: Response<Guide[]>) => {
+  const { q } = (req as Request & { validQuery: { q: string } }).validQuery;
   const result = await pool.query<Guide>(
-    `select * from guides where title ilike '%${q}%' or region ilike '%${q}%'`
+    'select * from guides where title ilike $1 or region ilike $1 order by updated_at desc',
+    [`%${q}%`],
   );
   res.json(result.rows);
 }));
