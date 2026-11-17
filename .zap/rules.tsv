@@ -1,0 +1,16 @@
+﻿# ZAP baseline: regel-id, nivå och motivering.
+10038	FAIL	Content Security Policy saknas
+10021	FAIL	X-Content-Type-Options saknas
+10020	FAIL	Skydd mot clickjacking saknas
+10036	FAIL	Servern visar versionsnummer
+10055	WARN	Inline-stilar tillåts medvetet; inline-skript tillåts inte
+10063	WARN	Permissions-Policy
+10098	WARN	Kontrollera om öppen CORS återkommer
+10049	IGNORE	Statiska filer får cachas
+10109	IGNORE	Appen är en SPA
+10015	IGNORE	Cache-Control hanteras per nginx-location
+10027	IGNORE	Kommentarer i byggda JavaScript-filer
+90004	IGNORE	COOP och COEP ligger utanför veckans uppgift
+10110	IGNORE	Granskade biblioteksanrop i Vue- och urql-bundlen
+10094	IGNORE	Base64-data i byggd bundle; kontrollera att det inte är en hemlighet
+90005	IGNORE	Gäller skannerns egna request-headers
