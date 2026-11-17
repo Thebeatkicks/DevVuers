@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, onMounted } from "vue";
-import { useRoute,  useRouter } from "vue-router";
+import { useRoute, useRouter } from "vue-router";
 import { useSessionStore } from "@/stores/session";
 import BaseButton from "../components/BaseButton.vue";
 
@@ -19,7 +19,7 @@ const onSubmit = async () => {
   });
   if (session.isLoggedIn) {
     await router.push((route.query.redirect as string) || "/");
-  };
+  }
 };
 </script>
 
