@@ -16,6 +16,7 @@ const session = useSessionStore();
         <RouterLink to="/tours">Tours</RouterLink>
 
         <template v-if="session.isLoggedIn">
+          <span>{{ session.user?.display_name }}</span>
           <RouterLink to="/profil">Min sida</RouterLink>
           <BaseButton @click="session.logout">Logga ut</BaseButton>
         </template>

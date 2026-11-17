@@ -1,7 +1,7 @@
-import { useSessionStore } from "./stores/session";
+import { getToken } from "./lib/token";
 
 function authHeaders(): Record<string, string> {
-  const { token } = useSessionStore();
+  const token = getToken();
   return token ? { Authorization: `Bearer ${token}` } : {};
 }
 

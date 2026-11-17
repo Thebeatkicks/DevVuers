@@ -24,14 +24,8 @@ export interface Tour {
   notes: string | null
 }
 
-export interface User {
-  id: number,
-  email: string,
-  password_hash: string,
-  display_name: string,
-  role: string,
-  createdAt: string,
-}
+import type { User } from './index.js'
+export type { User } from './index.js'
 
 export interface LoginRequest {
   email: string
@@ -42,6 +36,10 @@ export interface RegisterRequest {
   email: string
   password: string
   displayName: string
+}
+
+export interface ApiError {
+  error: string
 }
 
 export interface LoginResponse {

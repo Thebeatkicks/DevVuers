@@ -1,5 +1,5 @@
 import { createRouter, createWebHistory } from "vue-router";
-import { useSessionStore } from "@/stores/session";
+import { useAuthStore } from "@/stores/auth";
 import HomeView from "../views/HomeView.vue";
 import GuidesView from "../views/GuidesView.vue";
 import GuideDetails from "../views/GuideDetails.vue";
@@ -48,11 +48,13 @@ const router = createRouter({
     },
     {
       path: "/logga-in",
-      name: "logga in",
+      alias: "/login",
+      name: "login",
       component: LoginView,
     },
     {
       path: "/profile",
+      alias: "/profil",
       name: "profil",
       component: ProfileView,
       meta: { requiresAuth: true },
@@ -66,9 +68,9 @@ const router = createRouter({
 });
 
 router.beforeEach((to) => {
-  const session = useSessionStore();
-  if (to.meta.requiresAuth && !session.isLoggedIn) {
-    return { path: "/logga-in", query: { redirect: to.fullPath } };
+  const auth = useAuthStore();
+  if (to.meta.requiresAuth && !auth.isLoggedIn) {
+    return { name: "login", query: { till: to.fullPath } };
   }
 });
 
