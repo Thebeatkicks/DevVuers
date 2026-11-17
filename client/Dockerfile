@@ -27,3 +27,5 @@ COPY --from=build /app/client/dist /usr/share/nginx/html
 
 EXPOSE 80
 # nginx-imagen har redan ett CMD som startar servern.
+# nginx startar som root och kör arbetsprocesserna som nginx.
+# Motiverat undantag för DS-0002 finns i .trivyignore.

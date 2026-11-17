@@ -20,4 +20,6 @@ ARG GIT_SHA=dev
 ENV GIT_SHA=${GIT_SHA}
 EXPOSE 4000
 # Node 22.18+ kör routes/guides.ts direkt – inget byggsteg behövs.
+# API-processen kör som den befintliga användaren node.
+USER node
 CMD ["node", "src/boot.js"]
