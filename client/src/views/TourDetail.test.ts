@@ -39,7 +39,7 @@ describe("TourDetail", () => {
   beforeEach(() => {
     setActivePinia(createPinia());
     vi.stubGlobal("fetch", mockedFetch);
-    vi.spyOn(console, "error").mockImplementation(() => { }); // tysta förväntade fel
+    vi.spyOn(console, "error").mockImplementation(() => {}); // tysta förväntade fel
   });
 
   afterEach(() => {
