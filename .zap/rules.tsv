@@ -1,4 +1,4 @@
-﻿# ZAP baseline: regel-id, nivå och motivering.
+# ZAP baseline: regel-id, nivå och motivering.
 10038	FAIL	Content Security Policy saknas
 10021	FAIL	X-Content-Type-Options saknas
 10020	FAIL	Skydd mot clickjacking saknas

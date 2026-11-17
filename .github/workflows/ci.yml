@@ -101,15 +101,7 @@ jobs:
           ignore-unfixed: true
           exit-code: '1'
           trivyignores: .trivyignore
-      - name: Appen – ZAP baseline
-        uses: zaproxy/action-baseline@v0.15.0
-        with:
-          target: 'http://localhost:3001'
-          rules_file_name: '.zap/rules.tsv'
-          cmd_options: '-a -I'
-          fail_action: true
-          allow_issue_writing: false
-          artifact_name: zap-rapport
+      
       - name: Bygg imagerna och starta appen
         run: docker compose up -d --build --wait
 
@@ -127,7 +119,16 @@ jobs:
           ignore-unfixed: true
           exit-code: '1'
           trivyignores: .trivyignore
-
+          
+      - name: Appen – ZAP baseline
+        uses: zaproxy/action-baseline@v0.15.0
+        with:
+          target: 'http://localhost:3001'
+          rules_file_name: '.zap/rules.tsv'
+          cmd_options: '-a -I'
+          fail_action: true
+          allow_issue_writing: false
+          artifact_name: zap-rapport
       - name: Loggar från appen vid fel
         if: failure()
         run: docker compose logs --tail 50 api client
