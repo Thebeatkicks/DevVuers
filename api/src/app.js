@@ -1,5 +1,4 @@
 import express from 'express';
-import cors from 'cors';
 import { ZodError } from 'zod';
 import { config } from './config.js';
 import { authRouter } from './routes/auth.js';
@@ -13,7 +12,8 @@ import { wrap } from './lib/wrap.js';
 
 export const app = express();
 
-app.use(cors()); 
+// Klienten når API:et via nginx eller Vites proxy på samma origin.
+// Därför behövs ingen CORS-konfiguration.
 
 app.use(yoga.graphqlEndpoint, yoga);
 

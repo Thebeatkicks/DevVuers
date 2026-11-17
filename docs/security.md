@@ -26,6 +26,23 @@
 | A09 | Security Logging & Alerting Failures | | | | |
 | A10 | Mishandling of Exceptional Conditions | | | | |
 
+### Guides och CORS – PR #122
+
+Vi hittade en oskyddad guideuppdatering: både utloggade och medlemmar kunde ändra guider, och ogiltig difficulty accepterades. API:et skickade också Access-Control-Allow-Origin: *.
+
+Åtgärd: PUT /api/guides/:id kräver nu giltig token, rollen editor och validerad body. Id valideras och saknad guide ger 404. Den öppna CORS-konfigurationen och CORS-beroendena är borttagna.
+
+- PR: https://github.com/Thebeatkicks/DevVuers/pull/122
+- Före: fyra nya tester röda i Integration:
+  https://github.com/Thebeatkicks/DevVuers/actions/runs/44155199593/job/134293947355
+- Efter lokalt: alla 17 säkerhetstester och alla 27 API-tester gröna. Typkontrollen passerar.
+
+Testnamn:
+- PUT /api/guides/:id utan token ger 401
+- en medlem får inte ändra guider (403) – bara rollen editor
+- en redaktör kan ändra – och får en validerad guide tillbaka
+- API:et skickar ingen Access-Control-Allow-Origin – ingen annan sajt får läsa svaren
+
 ## Validering av indata
 
 ______ (var sitter valideringen, vilka scheman finns, vad händer vid ogiltig indata – svarskoden och formen på svaret?)
