@@ -11,13 +11,15 @@ flowchart TD
   PR --> Q[Kvalitet]
   PR --> B[Bygg]
   PR --> I[Integration]
+  PR --> SEC[Säkerhet]
 
   Q --> IMG[Image]
   B --> IMG
 
-  Q --> CHECK{Alla fyra jobb gröna?}
+  Q --> CHECK{Alla fem jobb gröna?}
   B --> CHECK
   I --> CHECK
+  SEC --> CHECK
   IMG --> CHECK
 
   CHECK -->|Nej| FIX[Åtgärda och pusha igen]
@@ -34,7 +36,7 @@ flowchart TD
 ```
 
 Image-jobbet väntar på Kvalitet och Bygg.
-Integration kör parallellt och krävs separat före merge.
+Integration och Säkerhet kör parallellt. Alla fem kontroller ska vara gröna före merge; Säkerhet behöver också läggas till i det aktiva rulesetet enligt avsnittet Regler för merge.
 
 ## Jobb
 
@@ -43,6 +45,7 @@ Integration kör parallellt och krävs separat före merge.
 | Kvalitet | npm ci, lint, formatkontroll, klienttester, API-konfigurationstester och typecheck | Stilfel, testfel och typfel |
 | Bygg | npm ci och npm run build | Fel i bygget av Vue-klienten |
 | Integration | Databasservices, npm ci, seed, migrering och test:api | Fel i GraphQL, databasåtkomst, N+1 och inloggningskrav |
+| Säkerhet (M8) | npm audit för produktionsberoenden, Trivy på repot, Compose-bygge och appstart, kontroll av API-användare, Trivy på API-imagen och ZAP baseline | Sårbara beroenden, hemligheter, felkonfigurerade Dockerfiler, sårbarheter i runtime-imagen och brister i HTTP-headers |
 | Image | Bygger API- och klientimages | Fel i Docker-byggena |
 | Deploy → Azure staging | Efter grön Image och Integration på push till `main`; OIDC-inloggning, uppdaterar API- och klientimage, väntar på rätt health-SHA och röktestar GraphQL | Fel i deploy, revisionens start, konfiguration eller databassvar |
 | Deploy → Azure Functions | Efter grön Kvalitet på push till `main`; `npm ci --omit=dev` i `functions/`, OIDC-inloggning, publicerar `functions/` till Azure Functions och röktestar `/api/process-image` | Fel i funktionsdeploy, konfiguration, funktionsnyckel eller svar från `process-image` |
@@ -60,6 +63,39 @@ Jobbet uppdaterar först API-containern och sedan klientcontainern i Azure Conta
 Deploy är **inte** en status check som kan godkännas före merge. På en pull request hoppas jobbet över. Det körs efter merge, på den commit som faktiskt hamnade på `main`; om Deploy misslyckas blir staging inte uppdaterad även om själva merge-committen ligger kvar på `main`.
 
 `Deploy → Azure Functions` körs också endast vid push till `main` (och hoppas över på pull requests). Det väntar på `Kvalitet`, installerar funktionens beroenden i `functions/`, loggar in i Azure med OIDC, publicerar paketet till `AZURE_FUNCTION_APP` och kör ett röktest mot `/api/process-image` med funktionsnyckeln.
+
+## Säkerhet (M8)
+
+Jobbet `security`, med namnet **Säkerhet**, körs på varje pull request och push till main. Kontrollerna ligger i följande ordning, med de billigaste först:
+
+1. `npm audit --omit=dev --audit-level=high` kontrollerar produktionsberoenden och stoppar vid high eller critical.
+2. Trivy `fs` skannar produktionsberoenden, hemligheter och felkonfigurationer i repot (`vuln,secret,misconfig`). Fynd på HIGH eller CRITICAL med tillgänglig fix stoppar sårbarhetsskanningen; konfigurations- och hemlighetsfynd hanteras också av skannern.
+3. `docker compose up -d --build --wait` bygger API- och klientimages och startar appen. En testnyckel för JWT sätts enbart för CI-miljön.
+4. `docker compose exec -T api id` och en kontroll av `id -u` kräver att API-processen kör med uid 1000.
+5. Trivy `image` skannar `utpost-api`, inklusive operativsystemspaket och installerade npm-paket. HIGH och CRITICAL med tillgänglig fix stoppar jobbet.
+6. ZAP baseline granskar `http://localhost:3001`, alltså nginx i den byggda klientcontainern. Därmed testas de headers som levereras av containerappen, inte Vites utvecklingsserver.
+
+Ett misslyckat steg stoppar efterföljande vanliga steg. Vid fel skrivs de senaste apploggarna från API och klient ut. När ZAP har genererat rapporter sparas de i artefakten `zap-rapport`.
+
+### Undantag och blockerande regler
+
+Undantag dokumenteras med motivering i `.trivyignore` och `.zap/rules.tsv`. Hemligheter får inte ignoreras: de tas bort och roteras om de har exponerats.
+
+DS-0002 ignoreras för nginx-klienten eftersom dess masterprocess startar som root och arbetsprocesserna kör som nginx. Regel-id:t gäller globalt i `.trivyignore`, så API:ets användare verifieras separat i CI. API-imagen har `USER node` och npm tas bort efter installation eftersom appen startas med `node`.
+
+ZAP:s regler 10020, 10021, 10036 och 10038 är FAIL: saknat clickjacking-skydd, saknad nosniff-header, synlig serverversion och saknad CSP. `cmd_options: '-a -I'` gör att WARN inte ger felkod, medan FAIL fortfarande stoppar jobbet. Inline-stilar i CSP är ett medvetet WARN; inline-skript tillåts inte.
+
+### Verifiering och tid
+
+- [PR #123: säkerhetsskanning i pipelinen](https://github.com/Thebeatkicks/DevVuers/pull/123).
+- [Röd repo-skanning med DS-0002 i båda Dockerfilerna](https://github.com/Thebeatkicks/DevVuers/actions/runs/44170308443).
+- [Röd imageskanning före borttagning av npm](https://github.com/Thebeatkicks/DevVuers/actions/runs/44172786022).
+- [Röd ZAP-körning före headerfix: FAIL-NEW 4](https://github.com/Thebeatkicks/DevVuers/actions/runs/44176242701).
+- [Grön PR-körning med samtliga fyra skanningar](https://github.com/Thebeatkicks/DevVuers/actions/runs/44177706237). Säkerhet tog **3 min 4 s**, ungefär tre minuter.
+
+Lokalt verifierades uid 1000 och HTTP 200 med säkerhetsheaders på `/`, `/api/health` och en byggd JavaScript-fil under `/assets/`. API-svaret hade `Cache-Control: no-store`, medan asset-filen hade lång cachetid och `public, immutable`.
+
+**Återstår före M8-taggen:** länka grön main-körning och jobbets ungefärliga tid på main; dokumentera den separata PR:en med avsiktligt sårbart beroende och att den stängts utan merge; verifiera stagingens headers. Dessa resultat är ännu inte dokumenterade som genomförda.
 
 ## Kvalitet
 
@@ -135,6 +171,8 @@ Bypass-listan är tom.
 
 [Ruleset för main](https://github.com/Thebeatkicks/DevVuers/rules/23586241)
 
+**M8-komplettering återstår:** lägg till statuskontrollen **Säkerhet** från GitHub Actions i samma ruleset och verifiera att den krävs. Listan ovan beskriver de tidigare verifierade kraven; säkerhetsjobbet är inte dokumenterat som obligatoriskt förrän inställningen har kontrollerats.
+
 ## Verifiering och mätningar
 
 Alla fyra jobb passerade i följande körning på main:
@@ -194,6 +232,22 @@ Health svarade med HTTP 200 och samma SHA som workflowens `headSha`: `8ca7b31849
 Deploy-loggen verifierar health-SHA och GraphQL; den manuella health-kontrollen verifierade även Postgres och MongoDB som friska. Se README:s [M6-bevis](../README.md#i-molnet-m6).
 
 ## Felsökning
+
+### Säkerhet rött på npm audit
+
+Kör `npm audit --omit=dev` för att läsa produktionsfynden. `npm audit fix` uppdaterar inom tillåtna versionsintervall. Versionsbyten som bryter intervallet hanteras uttryckligen och verifieras med tester, typkontroll och bygge; använd inte generell `--force` för att kringgå beroendekonflikter. Kvarstående fynd utan fix dokumenteras i `docs/security.md` och bedöms uttryckligen.
+
+### Säkerhet rött på Trivy
+
+Läs målfil och regel eller CVE i loggen. DS-0002 i API:et åtgärdas med `USER node`; nginx-undantaget motiveras i `.trivyignore`. Ett rent repo innebär inte att imagen är ren: imageskanningen kan hitta sårbarheter i operativsystemet eller npm som följde med basimagen.
+
+### Säkerhet rött på ZAP
+
+Läs regel-id och URL i rapporten. Saknad CSP på en enskild adress kan bero på att dess nginx-location saknar `include /etc/nginx/security-headers.conf`. Regelfilen kräver tabbar och UTF-8 utan BOM. `Cannot read properties of undefined (reading 'trim')` inträffade när regelfilen hade BOM. `Connection refused` inträffade när ZAP låg före Compose-starten. ZAP ska köras efter appstart och imageskanning. WARN ska inte stoppa jobbet med `-I`; FAIL ska göra det.
+
+### Säkerhet rött på Compose-start
+
+Kontrollera steget med apploggar och `docker compose logs api client`. Compose kräver `JWT_SECRET` även i CI. API:ets start och seedning behöver lyckas innan appen kan svara; efter att npm tagits bort ur imagen används `node`, inte `npm`, för eventuella kommandon inne i API-containern.
 
 ### JWT_SECRET måste vara satt
 
