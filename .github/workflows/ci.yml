@@ -67,6 +67,20 @@ jobs:
       - run: npm run seed # tom databas → testdata, exakt som lokalt
       - run: npm run migrate:logs # mätpunkterna till Mongo – testet för Tour.logs kräver det
       - run: npm run test:api
+  security:
+    name: Säkerhet
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+
+      - name: Beroenden – npm audit
+        run: npm audit --omit=dev --audit-level=high
+
   build:
     name: Bygg
     runs-on: ubuntu-latest
