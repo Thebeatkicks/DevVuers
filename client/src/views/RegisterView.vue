@@ -20,7 +20,7 @@ const onSubmit = async () => {
 </script>
 
 <template>
-  <form @submit="onSubmit" class="register">
+  <form @submit.prevent="onSubmit" class="register">
     <h1>Skapa konto</h1>
     <input v-model="displayName" placeholder="Visningsnamn" required />
     <input v-model="email" placeholder="E-post" required />

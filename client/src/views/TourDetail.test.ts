@@ -3,10 +3,15 @@ import "@testing-library/jest-dom/vitest";
 import { render, screen } from "@testing-library/vue";
 import type { TourLog } from "@utpost/shared";
 import TourDetail from "./TourDetail.vue";
+import { createPinia, setActivePinia } from "pinia";
 
-vi.mock("vue-router", () => ({
-  useRoute: () => ({ params: { id: "1" } }),
-}));
+vi.mock("vue-router", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("vue-router")>();
+  return {
+    ...actual,
+    useRoute: () => ({ params: { id: "1" } }),
+  };
+});
 
 const mockedFetch = vi.fn();
 
@@ -32,6 +37,7 @@ const respondWith = (data: unknown, ok = true, status = 200) =>
 
 describe("TourDetail", () => {
   beforeEach(() => {
+    setActivePinia(createPinia());
     vi.stubGlobal("fetch", mockedFetch);
     vi.spyOn(console, "error").mockImplementation(() => {}); // tysta förväntade fel
   });

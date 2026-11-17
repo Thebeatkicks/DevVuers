@@ -1,4 +1,5 @@
 import { createRouter, createWebHistory } from "vue-router";
+import { useAuthStore } from "@/stores/auth";
 import HomeView from "../views/HomeView.vue";
 import GuidesView from "../views/GuidesView.vue";
 import GuideDetails from "../views/GuideDetails.vue";
@@ -43,16 +44,20 @@ const router = createRouter({
       path: "/tours/:id",
       name: "tour-detail",
       component: TourDetail,
+      meta: { requiresAuth: true },
     },
     {
-      path: "/login",
-      name: "logga in",
+      path: "/logga-in",
+      alias: "/login",
+      name: "login",
       component: LoginView,
     },
     {
       path: "/profile",
+      alias: "/profil",
       name: "profil",
       component: ProfileView,
+      meta: { requiresAuth: true },
     },
     {
       path: "/register",
@@ -60,6 +65,13 @@ const router = createRouter({
       component: RegisterView,
     },
   ],
+});
+
+router.beforeEach((to) => {
+  const auth = useAuthStore();
+  if (to.meta.requiresAuth && !auth.isLoggedIn) {
+    return { name: "login", query: { till: to.fullPath } };
+  }
 });
 
 export default router;

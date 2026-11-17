@@ -1,15 +1,8 @@
 <script setup lang="ts">
-import { useRouter } from "vue-router";
 import { useSessionStore } from "@/stores/session";
 import BaseButton from "../components/BaseButton.vue";
 
 const session = useSessionStore();
-const router = useRouter();
-
-router.beforeEach((to) => {
-  const session = useSessionStore();
-  if (to.meta.requiresAuth && !session.isLoggedIn) return "/login";
-});
 </script>
 
 <template>

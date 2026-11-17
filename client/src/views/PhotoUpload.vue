@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { post } from "../api";
 import { ref } from "vue";
 import type {
   Tour,
@@ -38,21 +39,7 @@ async function onFileChange(event: Event) {
       height,
     };
 
-    const response = await fetch("/api/photos", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(body),
-    });
-
-    if (!response.ok) {
-      throw new Error(
-        response.status === 502
-          ? "Bildfunktionen svarar inte. Är func start igång?"
-          : `Något gick fel (status ${response.status}).`,
-      );
-    }
-
-    result.value = (await response.json()) as PhotoUploadResponse;
+    result.value = await post<PhotoUploadResponse>("/photos", body);
   } catch (e) {
     error.value = e instanceof Error ? e.message : "Okänt fel.";
   } finally {

@@ -8,6 +8,7 @@ import type {
 } from "@utpost/shared";
 import { post } from "../api";
 import { getToken, setToken } from "../lib/token";
+import type { RegisterRequest } from "../../../shared/src/types";
 
 // M8: inloggat läge som en Pinia-store (M2:s DoD – nu finns den). Storen vet vem som är
 // inloggad; själva token ligger i lib/token.ts och går bara till API-modulen.
@@ -32,5 +33,15 @@ export const useAuthStore = defineStore("auth", () => {
     user.value = null;
   };
 
-  return { user, isLoggedIn, login, logout };
+  const register = async (credentials: RegisterRequest) => {
+    const svar = await post<LoginResponse | ApiError>(
+      "/auth/register",
+      credentials,
+    );
+    if ("error" in svar) throw new Error(svar.error);
+    setToken(svar.token);
+    user.value = svar.user;
+  };
+
+  return { user, isLoggedIn, login, logout, register };
 });
