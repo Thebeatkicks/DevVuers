@@ -1,6 +1,10 @@
 import { Router } from 'express';
 import { pool } from '../db/client.js';
 import { config } from '../config.js';
+import { requireUser } from '../lib/auth.js';
+import { validate } from '../lib/validate.js';
+import { wrap } from '../lib/wrap.js';
+import { photoUploadSchema, idParam } from '../lib/schemas.js'
 
 export const photosRouter = Router();
 
@@ -8,10 +12,15 @@ export const photosRouter = Router();
 // storlekar och signaturerna görs av funktionen process-image (functions/) – lokalt i func start,
 // i molnet i Azure Functions. API:et sparar raden, lämnar över jobbet och väntar på svaret.
 // Väntan är I/O, inte räknande: under tiden är tråden ledig och alla andra anrop svarar som vanligt.
-photosRouter.post('/', async (req, res) => {
+photosRouter.post('/', requireUser, validate(photoUploadSchema), wrap(async (req, res) => {
   const started = Date.now();
   const { tourId, filename, width, height } = req.body;
 
+  const tour = await pool.query('select id, user_id from tours where id = $1', [tourId]);
+  if(!tour.rows[0]) return res.status(404).json({error: 'hittades inte'})
+  if(tour.rows[0].user_id !== req.user.id && req.user.role !== 'editor'){
+    return res.status(403).json({error: 'inte din tur'})
+  }
   const result = await pool.query(
     'insert into photos (tour_id, filename, width, height) values ($1,$2,$3,$4) returning *',
     [tourId, filename, width, height],
@@ -45,9 +54,11 @@ photosRouter.post('/', async (req, res) => {
     instance: processed.instance,
     apiMs: Date.now() - started, // API:ets tid för hela anropet: databasen + funktionen + nätet
   });
-});
+}));
 
-photosRouter.get('/tour/:tourId', async (req, res) => {
-  const result = await pool.query('select * from photos where tour_id = $1', [req.params.tourId]);
+photosRouter.get('/tour/:tourId', wrap(async (req, res) => {
+  const tourId = idParam.safeParse(req.params.tourId);
+  if(!tourId.success) return res.status(400).json({error: 'ogiltigt id'})
+  const result = await pool.query('select * from photos where tour_id = $1', [tourId.data]);
   res.json(result.rows);
-});
+}));

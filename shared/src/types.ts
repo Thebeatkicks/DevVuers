@@ -35,13 +35,17 @@ export interface User {
 
 export interface LoginRequest {
   email: string
-  password_hash: string
+  password: string
 }
 
 export interface RegisterRequest {
   email: string
-  password_hash: string
-  display_name: string
+  password: string
+  displayName: string
+}
+
+export interface ApiError {
+  error: string
 }
 
 export interface LoginResponse {
