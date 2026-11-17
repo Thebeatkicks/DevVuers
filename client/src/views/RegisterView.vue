@@ -24,12 +24,7 @@ const onSubmit = async () => {
     <h1>Skapa konto</h1>
     <input v-model="displayName" placeholder="Visningsnamn" required />
     <input v-model="email" placeholder="E-post" required />
-    <input
-      v-model="password"
-      type="password"
-      placeholder="Lösenord"
-      required
-    />
+    <input v-model="password" type="password" placeholder="Lösenord" required />
     <p v-if="session.errorParagraph" class="error">
       {{ session.errorParagraph }}
     </p>
