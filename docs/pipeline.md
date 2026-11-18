@@ -36,7 +36,7 @@ flowchart TD
 ```
 
 Image-jobbet väntar på Kvalitet och Bygg.
-Integration och Säkerhet kör parallellt. Alla fem kontroller ska vara gröna före merge; Säkerhet behöver också läggas till i det aktiva rulesetet enligt avsnittet Regler för merge.
+Integration och Säkerhet kör parallellt. Det aktiva rulesetet kräver att alla fem kontroller är gröna före merge: Kvalitet, Bygg, Integration, Image och Säkerhet.
 
 ## Jobb
 
@@ -164,6 +164,7 @@ Det aktiva rulesetet för main kräver:
   - Bygg
   - Integration
   - Image
+  - Säkerhet
 - Att branchen är uppdaterad mot main.
 
 Rulesetet blockerar även force push och borttagning av main.
@@ -171,7 +172,7 @@ Bypass-listan är tom.
 
 [Ruleset för main](https://github.com/Thebeatkicks/DevVuers/rules/23586241)
 
-**M8-komplettering återstår:** lägg till statuskontrollen **Säkerhet** från GitHub Actions i samma ruleset och verifiera att den krävs. Listan ovan beskriver de tidigare verifierade kraven; säkerhetsjobbet är inte dokumenterat som obligatoriskt förrän inställningen har kontrollerats.
+**Verifierat 2026-11-18:** rulesetet är aktivt för standardbranchen main och kräver samtliga fem kontroller från GitHub Actions, inklusive **Säkerhet**. Kravet på minst ett godkännande, uppdaterad branch och skydd mot force push och borttagning är kvar. Bypass-listan är tom.
 
 ## Verifiering och mätningar
 
