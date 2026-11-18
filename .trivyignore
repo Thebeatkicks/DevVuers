@@ -1,0 +1,7 @@
+# DS-0002: client/Dockerfile använder nginx:alpine.
+# nginx startar som root för port 80 och kör arbetsprocesserna som nginx.
+# API:et har USER node och ska verifieras separat.
+# Undantaget gäller regel-id:t i hela repot.
+# Omprövas inför produktion: nginx-unprivileged på port 8080.
+# Team DevVuers, 2026-11-17
+DS-0002

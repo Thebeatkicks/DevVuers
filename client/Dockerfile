@@ -22,8 +22,12 @@ FROM nginx:1.27-alpine
 # när containern startar och skriver resultatet till /etc/nginx/conf.d/ – så ${API_UPSTREAM} i mallen
 # blir api:4000 i compose och localhost:4000 i Azure, med samma image.
 COPY client/nginx.conf.template /etc/nginx/templates/default.conf.template
+# Säkerhetsheaders som inkluderas i varje nginx-location.
+COPY client/security-headers.conf /etc/nginx/security-headers.conf
 ENV API_UPSTREAM=api:4000
 COPY --from=build /app/client/dist /usr/share/nginx/html
 
 EXPOSE 80
 # nginx-imagen har redan ett CMD som startar servern.
+# nginx startar som root och kör arbetsprocesserna som nginx.
+# Motiverat undantag för DS-0002 finns i .trivyignore.

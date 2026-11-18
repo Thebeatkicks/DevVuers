@@ -10,6 +10,9 @@ COPY package.json package-lock.json ./
 COPY shared/package.json shared/
 COPY api/package.json api/
 RUN npm ci --workspace=api --omit=dev
+# npm behövs vid installationen, men API:et startas med node.
+# Ta bort npm och dess beroenden ur den färdiga imagen.
+RUN rm -rf /usr/local/lib/node_modules/npm /usr/local/bin/npm /usr/local/bin/npx
 
 # Sedan koden. Ändras ofta, ligger därför sist.
 COPY shared/ shared/
@@ -20,4 +23,6 @@ ARG GIT_SHA=dev
 ENV GIT_SHA=${GIT_SHA}
 EXPOSE 4000
 # Node 22.18+ kör routes/guides.ts direkt – inget byggsteg behövs.
+# API-processen kör som den befintliga användaren node.
+USER node
 CMD ["node", "src/boot.js"]
