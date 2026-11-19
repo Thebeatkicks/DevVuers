@@ -1,8 +1,8 @@
 # Säkerhet – Utpost
 
-*Mall (M8). Byt ut exempelraderna mot era egna fynd. Minst tre rader ska ha ett riktigt fynd, en fix i en PR och ett test som var rött före fixen. "Gäller inte oss, för …" är också ett svar – men bara om det är sant. Listan följer OWASP Top 10 (2025).*
+Genomgången följer OWASP Top 10 (2025). Fynd, åtgärder och verifieringsbevis anges per risk.
 
-**Datum:** 2026-11-17
+**Datum:** 2026-11-18
 **Hotbilden i en mening:** En obehörig eller inloggad angripare kan försöka läsa kontouppgifter, ändra redaktionens guider eller manipulera andra användares turer och bilder.
 
 ## Autentiseringen (M8)
@@ -30,7 +30,7 @@ Implementation och bevis: PR #119, #120, #121 och #122.
 | A07 | Authentication Failures | Ja | Inloggningssvaret innehöll password_hash och lösenordsskyddet behövde stärkas. | publicUser, scrypt och entimmes JWT med låst HS256 i [#120](https://github.com/Thebeatkicks/DevVuers/pull/120). Token endast i klientminnet i #121. | Testet ”svaret på en lyckad inloggning innehåller token och användaren – men aldrig password_hash” var rött i [#119](https://github.com/Thebeatkicks/DevVuers/pull/119) och är nu grönt. LoginView-tester verifierar tokenlagringen. |
 | A08 | Software or Data Integrity Failures | Delvis | Vi är beroende av att installerade paket och publicerade images motsvarar granskad kod. Något separat integritetsangrepp har inte bevisats. | Lockfil och npm ci används i CI. Containerbilder publiceras med SHA-taggar och stagingens health-SHA verifieras vid deploy. | Pipelinekonfigurationen beskriver skydden. Detta är förebyggande åtgärder, inte ett nytt bevisat och lagat hål. |
 | A09 | Security Logging & Alerting Failures | Ja | Det finns ingen komplett säkerhetsloggning och larmning för misslyckad inloggning eller nekad åtkomst. | Vanliga felloggar finns, men full säkerhetsloggning har inte införts i M8. | Kvarstående brist dokumenteras under Kända brister. Ingen testad fix påstås för denna rad. |
-| A10 | Mishandling of Exceptional Conditions | Ja | Vissa fel gav hängande anrop eller HTML-fel i stället för ett hanterat JSON-svar. | wrap och central felhantering infördes i [#120](https://github.com/Thebeatkicks/DevVuers/pull/120). Guideuppdateringen använder wrap i #122. | Testerna ”ett id som inte är ett tal ger 400, inte ett ohanterat fel” och ”trasig JSON ger 400 med ett svar – inte ett anrop som hänger” var röda i [#119](https://github.com/Thebeatkicks/DevVuers/pull/119) och är nu gröna. Samtliga async-routes i guides.ts använder nu wrap; kompletteringen ingår i PR #123.
+| A10 | Mishandling of Exceptional Conditions | Ja | Vissa fel gav hängande anrop eller HTML-fel i stället för ett hanterat JSON-svar. | wrap och central felhantering infördes i [#120](https://github.com/Thebeatkicks/DevVuers/pull/120). Guideuppdateringen använder wrap i #122. | Testerna ”ett id som inte är ett tal ger 400, inte ett ohanterat fel” och ”trasig JSON ger 400 med ett svar – inte ett anrop som hänger” var röda i [#119](https://github.com/Thebeatkicks/DevVuers/pull/119) och är nu gröna. Samtliga async-routes i guides.ts använder nu wrap; kompletteringen ingår i PR #123. |
 
 ### Guides och CORS – PR #122
 
@@ -44,6 +44,7 @@ Vi hittade en oskyddad guideuppdatering: både utloggade och medlemmar kunde än
 - Efter lokalt: alla 17 säkerhetstester och alla 27 API-tester gröna. Typkontrollen passerar.
 
 Testnamn:
+
 - PUT /api/guides/:id utan token ger 401
 - en medlem får inte ändra guider (403) – bara rollen editor
 - en redaktör kan ändra – och får en validerad guide tillbaka
@@ -65,7 +66,8 @@ Vi sätter Content-Security-Policy, X-Content-Type-Options: nosniff, X-Frame-Opt
 
 CSP tillåter egna skript och blockerar inline-skript. Inline-stilar tillåts medvetet och behandlas som WARN i ZAP. API- och GraphQL-svar får Cache-Control: no-store. Hashade statiska assets får lång cachetid och public, immutable.
 
-Headrarna är verifierade lokalt på /, en JavaScript-fil under /assets/ och /api/health. Staging ska verifieras efter merge.
+Headrarna är verifierade både lokalt och i staging. Den 2026-11-18 gav stagingens `/`, `/api/health` och `/assets/index-BSriNDjL.js` HTTP 200 med CSP, `X-Content-Type-Options: nosniff`, `X-Frame-Options: DENY` och `Server: nginx` utan versionsnummer. API-svaret hade `Cache-Control: no-store` och asset-filen lång cachetid med `public, immutable`. Se slutbevisen under Skanning i pipelinen.
+
 ## Skanning i pipelinen
 
 Jobbet Säkerhet körs på pull requests och push till main:
@@ -77,6 +79,7 @@ Jobbet Säkerhet körs på pull requests och push till main:
 - ZAP baseline granskar den körande appens HTTP-svar via nginx.
 
 Fynd och åtgärder:
+
 - Drizzle uppdaterades och Vue Router byttes till 4.6.5. Produktionsauditen visar 0 sårbarheter.
 - API:et fick USER node. nginx-klientens DS-0002-undantag motiveras i .trivyignore.
 - Imageskanningen hittade 10 HIGH-fynd i npm:s medföljande beroenden. npm togs bort efter installation eftersom API:et startas med node.
@@ -84,14 +87,23 @@ Fynd och åtgärder:
 - ZAP-regler och motiveringar finns i .zap/rules.tsv. FAIL stoppar jobbet; WARN gör det inte eftersom -I används.
 
 Bevis:
+
 - PR: https://github.com/Thebeatkicks/DevVuers/pull/123
 - Röd ZAP-körning före headerfix:
   https://github.com/Thebeatkicks/DevVuers/actions/runs/44176242701
 - Grön PR-körning med samtliga fyra skanningar:
   https://github.com/Thebeatkicks/DevVuers/actions/runs/44177706237
-- Säkerhet tog cirka 3 minuter i den gröna PR-körningen. Tid på main kompletteras efter merge.
+- Säkerhet tog cirka 3 minuter i den gröna PR-körningen och 2 min 35 s på main. Se slutbevisen nedan.
 
 Lokalt verifierades /, /api/health och en byggd JavaScript-fil under /assets/ med curl. Alla gav HTTP 200, CSP, nosniff, X-Frame-Options: DENY och Server: nginx utan versionsnummer. API-svaret hade no-store och asset-filen public, immutable.
+
+### Slutbevis – verifierat 2026-11-18
+
+- [Alla sju jobb gröna på main](https://github.com/Thebeatkicks/DevVuers/actions/runs/44308967953), commit `0bda0295d1581cbbf078934e4982666091bbe49a`. Säkerhet tog **2 min 35 s**.
+- [Test-PR #124](https://github.com/Thebeatkicks/DevVuers/pull/124): Express 4.17.1 installerades avsiktligt på en separat branch.
+- [Röd körning](https://github.com/Thebeatkicks/DevVuers/actions/runs/44312426760): Säkerhet stoppade på **Beroenden – npm audit**, med 7 fynd varav 4 high. Efterföljande skanningssteg hoppades över; Kvalitet, Bygg, Integration och Image passerade.
+- GitHub visade `mergeStateStatus: BLOCKED`. Test-PR:en stängdes utan merge. Main-versionens beroenden återställdes lokalt med `npm ci` och produktionsauditen visade 0 sårbarheter.
+- Stagingens säkerhetsheaders verifierades med curl på `/`, `/api/health` och `/assets/index-BSriNDjL.js`. Samtliga gav HTTP 200 med CSP, nosniff, `X-Frame-Options: DENY` och `Server: nginx` utan versionsnummer. API-svaret hade `no-store`, och asset-filen hade lång cachetid med `public, immutable`.
 
 ## Kända brister (medvetet kvar)
 

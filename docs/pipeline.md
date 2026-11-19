@@ -95,7 +95,25 @@ ZAP:s regler 10020, 10021, 10036 och 10038 är FAIL: saknat clickjacking-skydd, 
 
 Lokalt verifierades uid 1000 och HTTP 200 med säkerhetsheaders på `/`, `/api/health` och en byggd JavaScript-fil under `/assets/`. API-svaret hade `Cache-Control: no-store`, medan asset-filen hade lång cachetid och `public, immutable`.
 
-**Återstår före M8-taggen:** länka grön main-körning och jobbets ungefärliga tid på main; dokumentera den separata PR:en med avsiktligt sårbart beroende och att den stängts utan merge; verifiera stagingens headers. Dessa resultat är ännu inte dokumenterade som genomförda.
+### Grön main och verifierat merge-stopp
+
+Efter merge av PR #123 passerade alla sju jobb på main: Kvalitet, Bygg, Integration, Säkerhet, Image, Deploy → Azure Functions och Deploy → Azure staging.
+
+- Körning: https://github.com/Thebeatkicks/DevVuers/actions/runs/44308967953
+- Commit: 0bda0295d1581cbbf078934e4982666091bbe49a
+- Säkerhet tog 2 min 35 s, ungefär tre minuter.
+
+Vi verifierade sedan att Säkerhet kan stoppa en försämring:
+
+- Test-PR: https://github.com/Thebeatkicks/DevVuers/pull/124
+- Express 4.17.1 installerades avsiktligt på en separat branch.
+- Körning: https://github.com/Thebeatkicks/DevVuers/actions/runs/44312426760
+- Säkerhet blev rött på Beroenden – npm audit: 7 fynd, varav 4 high.
+- Efterföljande skanningssteg hoppades över. Kvalitet, Bygg, Integration och Image passerade.
+- GitHub visade mergeStateStatus: BLOCKED.
+- Test-PR:en stängdes utan merge. Main-versionens beroenden återställdes lokalt med npm ci och produktionsauditen visade 0 sårbarheter.
+
+**Staging verifierad 2026-11-18:** `/`, `/api/health` och `/assets/index-BSriNDjL.js` gav HTTP 200 med CSP, `X-Content-Type-Options: nosniff`, `X-Frame-Options: DENY` och `Server: nginx` utan versionsnummer. API-svaret hade `Cache-Control: no-store` och asset-filen lång cachetid med `public, immutable`.
 
 ## Kvalitet
 
