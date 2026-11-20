@@ -9,6 +9,7 @@ import { mongo } from './db/mongo.js';
 import { pool } from './db/client.js';
 import { yoga } from './graphql/server.js';
 import { wrap } from './lib/wrap.js';
+import { cmsRouter } from './routes/cms.js';
 
 export const app = express();
 
@@ -44,6 +45,8 @@ app.use('/api/auth', authRouter);
 app.use('/api/guides', guidesRouter);
 app.use('/api/tours', toursRouter);
 app.use('/api/photos', photosRouter);
+app.use('/api/cms', cmsRouter);
+
 
 app.use((err, req, res, next) => {
   if (err instanceof ZodError) {
