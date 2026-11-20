@@ -18,6 +18,7 @@ const queryResult = (state: {
 });
 
 const stubs = {
+  EditorialNotices: true,
   RouterLink: {
     props: ["to"],
     template: '<a :href="to"><slot /></a>',
@@ -36,6 +37,7 @@ describe("HomeView", () => {
           popularGuides: [
             {
               id: "3",
+              slug: "kungsleden-3",
               title: "Kungsleden",
               region: "Lappland",
               difficulty: "medel",
@@ -50,7 +52,7 @@ describe("HomeView", () => {
 
     expect(screen.getByRole("link", { name: "Kungsleden" })).toHaveAttribute(
       "href",
-      "/guides/3",
+      "/guider/kungsleden-3",
     );
     expect(screen.getByText(/Lappland, medel, 440 km/)).toBeInTheDocument();
   });

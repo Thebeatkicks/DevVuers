@@ -44,6 +44,11 @@ services:
       MONGO_URL: mongodb://utpost:utpost@mongo:27017/utpost?authSource=admin
       JWT_SECRET: "${JWT_SECRET:?Kopiera .env.example till .env först}"
       SEED_ON_START: "1"
+      CONTENTFUL_SPACE_ID: ${CONTENTFUL_SPACE_ID:-}
+      CONTENTFUL_ENVIRONMENT: ${CONTENTFUL_ENVIRONMENT:-master}
+      CONTENTFUL_DELIVERY_TOKEN: ${CONTENTFUL_DELIVERY_TOKEN:-}
+      CONTENTFUL_PREVIEW_TOKEN: ${CONTENTFUL_PREVIEW_TOKEN:-}
+      CMS_CACHE_SECONDS: ${CMS_CACHE_SECONDS:-60}
     depends_on:
       postgres:
         condition: service_healthy

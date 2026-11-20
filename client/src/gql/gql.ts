@@ -14,11 +14,15 @@ import type { TypedDocumentNode as DocumentNode } from '@graphql-typed-document-
  * Learn more about it here: https://the-guild.dev/graphql/codegen/plugins/presets/preset-client#reducing-bundle-size
  */
 type Documents = {
-    "\n  query PopularGuides($limit: Int) {\n    popularGuides(limit: $limit) {\n      id\n      title\n      region\n      difficulty\n      lengthKm\n    }\n  }\n": typeof types.PopularGuidesDocument,
+    "\n  query EditorialNotices($preview: Boolean) {\n    notices(preview: $preview) {\n      id\n      title\n      level\n      status\n      guideSlug\n      body {\n        runs {\n          text\n          bold\n          italic\n          href\n        }\n      }\n    }\n  }\n": typeof types.EditorialNoticesDocument,
+    "\n  query Guide($slug: String!) {\n    guide(slug: $slug) {\n      slug\n      title\n      region\n      difficulty\n      lengthKm\n      bodyHtml\n      notices {\n        id\n        title\n        level\n        status\n        body {\n          runs {\n            text\n            bold\n            italic\n            href\n          }\n        }\n      }\n    }\n  }\n": typeof types.GuideDocument,
+    "\n  query PopularGuides($limit: Int) {\n    popularGuides(limit: $limit) {\n      id\n      slug\n      title\n      region\n      difficulty\n      lengthKm\n    }\n  }\n": typeof types.PopularGuidesDocument,
     "\n  query Tours($limit: Int) {\n    tours(limit: $limit) {\n      id\n      title\n      distanceM\n      user {\n        displayName\n      }\n      guide {\n        title\n      }\n      photos {\n        id\n      }\n    }\n  }\n": typeof types.ToursDocument,
 };
 const documents: Documents = {
-    "\n  query PopularGuides($limit: Int) {\n    popularGuides(limit: $limit) {\n      id\n      title\n      region\n      difficulty\n      lengthKm\n    }\n  }\n": types.PopularGuidesDocument,
+    "\n  query EditorialNotices($preview: Boolean) {\n    notices(preview: $preview) {\n      id\n      title\n      level\n      status\n      guideSlug\n      body {\n        runs {\n          text\n          bold\n          italic\n          href\n        }\n      }\n    }\n  }\n": types.EditorialNoticesDocument,
+    "\n  query Guide($slug: String!) {\n    guide(slug: $slug) {\n      slug\n      title\n      region\n      difficulty\n      lengthKm\n      bodyHtml\n      notices {\n        id\n        title\n        level\n        status\n        body {\n          runs {\n            text\n            bold\n            italic\n            href\n          }\n        }\n      }\n    }\n  }\n": types.GuideDocument,
+    "\n  query PopularGuides($limit: Int) {\n    popularGuides(limit: $limit) {\n      id\n      slug\n      title\n      region\n      difficulty\n      lengthKm\n    }\n  }\n": types.PopularGuidesDocument,
     "\n  query Tours($limit: Int) {\n    tours(limit: $limit) {\n      id\n      title\n      distanceM\n      user {\n        displayName\n      }\n      guide {\n        title\n      }\n      photos {\n        id\n      }\n    }\n  }\n": types.ToursDocument,
 };
 
@@ -39,7 +43,15 @@ export function graphql(source: string): unknown;
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function graphql(source: "\n  query PopularGuides($limit: Int) {\n    popularGuides(limit: $limit) {\n      id\n      title\n      region\n      difficulty\n      lengthKm\n    }\n  }\n"): (typeof documents)["\n  query PopularGuides($limit: Int) {\n    popularGuides(limit: $limit) {\n      id\n      title\n      region\n      difficulty\n      lengthKm\n    }\n  }\n"];
+export function graphql(source: "\n  query EditorialNotices($preview: Boolean) {\n    notices(preview: $preview) {\n      id\n      title\n      level\n      status\n      guideSlug\n      body {\n        runs {\n          text\n          bold\n          italic\n          href\n        }\n      }\n    }\n  }\n"): (typeof documents)["\n  query EditorialNotices($preview: Boolean) {\n    notices(preview: $preview) {\n      id\n      title\n      level\n      status\n      guideSlug\n      body {\n        runs {\n          text\n          bold\n          italic\n          href\n        }\n      }\n    }\n  }\n"];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function graphql(source: "\n  query Guide($slug: String!) {\n    guide(slug: $slug) {\n      slug\n      title\n      region\n      difficulty\n      lengthKm\n      bodyHtml\n      notices {\n        id\n        title\n        level\n        status\n        body {\n          runs {\n            text\n            bold\n            italic\n            href\n          }\n        }\n      }\n    }\n  }\n"): (typeof documents)["\n  query Guide($slug: String!) {\n    guide(slug: $slug) {\n      slug\n      title\n      region\n      difficulty\n      lengthKm\n      bodyHtml\n      notices {\n        id\n        title\n        level\n        status\n        body {\n          runs {\n            text\n            bold\n            italic\n            href\n          }\n        }\n      }\n    }\n  }\n"];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function graphql(source: "\n  query PopularGuides($limit: Int) {\n    popularGuides(limit: $limit) {\n      id\n      slug\n      title\n      region\n      difficulty\n      lengthKm\n    }\n  }\n"): (typeof documents)["\n  query PopularGuides($limit: Int) {\n    popularGuides(limit: $limit) {\n      id\n      slug\n      title\n      region\n      difficulty\n      lengthKm\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */

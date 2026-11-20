@@ -7,6 +7,13 @@ const iso = (d) => new Date(d).toISOString();
 
 export const resolvers = {
   Query: {
+    notices: async (_, { preview }, { user, cms }) => {
+      if (!preview) return cms.notices();
+      if (user?.role !== 'editor') {
+        throw new GraphQLError('Förhandsgranskningen kräver rollen editor', { extensions: { code: 'FORBIDDEN' } });
+      }
+      return cms.previewNotices();
+    },
     guides: async (_, args, { query }) =>
       (await query('select * from guides order by updated_at desc')).rows,
     popularGuides: async (_, { limit }, { query }) =>
@@ -37,6 +44,7 @@ export const resolvers = {
 
   // Fältresolvers: översätter kolumnnamn till schemats namn.
   Guide: {
+    notices: async (guide, args, { cms }) => (await cms.notices()).filter((notice) => notice.guideSlug === guide.slug),
     lengthKm: (guide) => guide.length_km,
     bodyHtml: (guide) => guide.body_html,
     heroImage: (guide) => guide.hero_image,
