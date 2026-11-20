@@ -7,8 +7,10 @@ export const urqlOptions: ClientOptions = {
   url: "/graphql",
   exchanges: [cacheExchange, fetchExchange],
   preferGetMethod: false,
-  fetchOptions: (): RequestInit => {
+    fetchOptions: () => {
     const token = getToken();
-    return { headers: token ? { Authorization: `Bearer ${token}` } : {} };
+    const headers: Record<string, string> = {};
+    if (token) headers.Authorization = `Bearer ${token}`;
+    return { headers };
   },
 };
