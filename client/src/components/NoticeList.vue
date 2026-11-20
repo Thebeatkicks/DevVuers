@@ -50,6 +50,8 @@ const STATUS: Record<string, string> = {
   padding: 8px 14px;
   margin: 12px 0;
   max-width: 70ch;
+  color: #1f2937;
+
 }
 .notice.varning {
   border-color: #b7791f;
