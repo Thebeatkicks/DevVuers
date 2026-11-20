@@ -13,6 +13,11 @@ const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes: [
     {
+      path: "/guider/:slug",
+      name: "guide-by-slug",
+      component: () => import("../views/GuideDetailView.vue"),
+    },
+    {
       path: "/",
       name: "home",
       component: HomeView,

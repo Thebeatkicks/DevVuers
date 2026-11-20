@@ -11,6 +11,12 @@ export const config = {
   gitSha: process.env.GIT_SHA || 'dev',
   port: 4000,
   uploadDir: './uploads',
+  cmsSpaceId: process.env.CONTENTFUL_SPACE_ID ?? '',
+  cmsEnvironment: process.env.CONTENTFUL_ENVIRONMENT ?? 'master',
+  cmsDeliveryToken: process.env.CONTENTFUL_DELIVERY_TOKEN ?? '',
+  cmsPreviewToken: process.env.CONTENTFUL_PREVIEW_TOKEN ?? '',
+  cmsCacheSeconds: Number(process.env.CMS_CACHE_SECONDS ?? 60),
+  cmsWebhookSecret: process.env.CMS_WEBHOOK_SECRET ?? '',
   imageFunctionUrl: process.env.IMAGE_FUNCTION_URL || 'http://localhost:7071/api/process-image',
   imageFunctionKey: process.env.IMAGE_FUNCTION_KEY || '',
 }

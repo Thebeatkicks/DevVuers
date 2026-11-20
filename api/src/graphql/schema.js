@@ -13,11 +13,30 @@ export const typeDefs = /* GraphQL */ `
     heroImage: String
     published: Boolean!
     updatedAt: String!
+    notices: [Notice!]!
   }
 
   type User {
     id: ID!
     displayName: String!
+  }
+
+  type TextRun {
+    text: String!
+    bold: Boolean!
+    italic: Boolean!
+    href: String
+  }
+  type Paragraph {
+    runs: [TextRun!]!
+  }
+  type Notice {
+    id: ID!
+    title: String!
+    level: String!
+    body: [Paragraph!]!
+    guideSlug: String
+    status: String!
   }
 
   type Photo {
@@ -48,6 +67,7 @@ export const typeDefs = /* GraphQL */ `
   }
 
   type Query {
+    notices(preview: Boolean = false): [Notice!]!
     "Alla guider, senast uppdaterad först"
     guides: [Guide!]!
     "Publicerade guider, nyast först – det startsidan kallar populärast"
