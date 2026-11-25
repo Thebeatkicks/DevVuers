@@ -1,8 +1,9 @@
 import { config } from '../config.js';
 
 // M9 (skuld 10): redaktionens innehåll bor i ett headless CMS – här Contentful. Den här filen är
-// det ENDA stället i Utpost som vet det. Resolvers frågar efter notiser och får dem i schemats
-// form; byter ni CMS är det den här filen som skrivs om, inte schemat och inte klienten.
+// det ENDA stället i Utpost som vet det. Resolvers frågar efter notiser och guidernas brödtext
+// och får dem i schemats form; byter ni CMS är det den här filen som skrivs om, inte schemat
+// och inte klienten.
 //
 // Contentful har två läs-API:er med samma adresser men olika värd och olika nyckel:
 //   cdn.contentful.com      + delivery-token  → bara det som är PUBLICERAT
@@ -10,7 +11,7 @@ import { config } from '../config.js';
 // Två tillstånd, två nycklar. Båda nycklarna stannar här på servern (.env) – klienten ser dem aldrig.
 const HOSTS = { published: 'https://cdn.contentful.com', preview: 'https://preview.contentful.com' };
 
-// Utan space och nyckel är CMS:et avstängt: appen fungerar, den har bara inga notiser.
+// Utan space och nyckel är CMS:et avstängt: appen fungerar, den har bara inga notiser eller CMS-texter.
 // Så kör pipelinen (inga CMS-hemligheter i testerna) och den som inte har satt upp ett space än.
 export const cmsConfigured = () => Boolean(config.cmsSpaceId && config.cmsDeliveryToken);
 
@@ -31,25 +32,50 @@ const entries = async (contentType, { preview = false } = {}) => {
 // (javascript:, data:) blir ingen länk alls – href är också ett ställe där skript kan smita in (M8, A05).
 const safeHref = (uri) => (typeof uri === 'string' && /^(https?:\/\/|\/)/.test(uri) ? uri : null);
 
-// Rich text i Contentful är inte HTML utan ett träd av noder: ett dokument med stycken, och i
-// styckena textbitar med märken (fet, kursiv) och länkar. Här formas trädet om till det schemat
-// lovar: stycken av textbitar. Blocktyper vi inte känner till hoppas över – det är här ni bygger
-// ut när guiderna flyttar in (rubriker, listor, bilder).
-export const toParagraphs = (document) => {
+const extractRuns = (nodes, href = null) => {
   const has = (node, mark) => (node.marks ?? []).some((m) => m.type === mark);
-  const runs = (nodes, href = null) =>
-    (nodes ?? []).flatMap((node) => {
-      if (node.nodeType === 'text') {
-        return node.value ? [{ text: node.value, bold: has(node, 'bold'), italic: has(node, 'italic'), href }] : [];
-      }
-      if (node.nodeType === 'hyperlink') return runs(node.content, safeHref(node.data?.uri));
-      return [];
-    });
-  return (document?.content ?? [])
-    .filter((node) => node.nodeType === 'paragraph')
-    .map((node) => ({ runs: runs(node.content) }))
-    .filter((paragraph) => paragraph.runs.length > 0);
+  return (nodes ?? []).flatMap((node) => {
+    if (node.nodeType === 'text') {
+      return node.value ? [{ text: node.value, bold: has(node, 'bold'), italic: has(node, 'italic'), href }] : [];
+    }
+    if (node.nodeType === 'hyperlink') return extractRuns(node.content, safeHref(node.data?.uri));
+    if (node.nodeType === 'paragraph' || node.nodeType === 'list-item') return extractRuns(node.content, href);
+    return [];
+  });
 };
+
+// Rich text i Contentful är inte HTML utan ett träd av noder. För notiser används enbart stycken:
+// stycken av textbitar med märken (fet, kursiv) och länkar.
+export const toParagraphs = (document) =>
+  (document?.content ?? [])
+    .filter((node) => node.nodeType === 'paragraph')
+    .map((node) => ({ runs: extractRuns(node.content) }))
+    .filter((paragraph) => paragraph.runs.length > 0);
+
+// Guiderna har även rubriker (heading-2, heading-3) och punktlistor (unordered-list med list-item)
+// utöver stycken (paragraph). Varje block får en kind ('p', 'h2', 'h3', 'li') och sina textbitar (runs).
+export const toGuideBlocks = (document) =>
+  (document?.content ?? []).flatMap((node) => {
+    if (node.nodeType === 'paragraph') {
+      const runs = extractRuns(node.content);
+      return runs.length > 0 ? [{ kind: 'p', runs }] : [];
+    }
+    if (node.nodeType === 'heading-2') {
+      const runs = extractRuns(node.content);
+      return runs.length > 0 ? [{ kind: 'h2', runs }] : [];
+    }
+    if (node.nodeType === 'heading-3') {
+      const runs = extractRuns(node.content);
+      return runs.length > 0 ? [{ kind: 'h3', runs }] : [];
+    }
+    if (node.nodeType === 'unordered-list') {
+      return (node.content ?? [])
+        .filter((item) => item.nodeType === 'list-item')
+        .map((item) => ({ kind: 'li', runs: extractRuns(item.content) }))
+        .filter((block) => block.runs.length > 0);
+    }
+    return [];
+  });
 
 // Contentfuls post → schemats Notice. Fälten heter som redaktionen kallar dem (rubrik, niva);
 // schemat håller sig till engelska som resten av API:et. Ett utkast kan sakna fält – därav ??.
@@ -62,13 +88,25 @@ const toNotice = (entry, status = 'published') => ({
   status,
 });
 
-// Cachen: Contentful räknar varje anrop (gratisnivån har ett tak per månad), och en notis ändras
-// några gånger i veckan – inte 50 gånger i sekunden. Därför hämtar vi högst en gång i minuten och
-// svarar ur minnet däremellan. Priset: en publicerad ändring syns efter upp till en minut.
+const toCmsGuide = (entry) => ({
+  id: entry.sys.id,
+  guideId: entry.fields?.guideId ?? null,
+  slug: entry.fields?.slug ?? null,
+  title: entry.fields?.title ?? null,
+  body: toGuideBlocks(entry.fields?.body),
+});
+
+// Cachen: Contentful räknar varje anrop (gratisnivån har ett tak per månad), och en notis eller
+// guide ändras några gånger i veckan – inte 50 gånger i sekunden. Därför hämtar vi högst en gång
+// i minuten och svarar ur minnet däremellan. Webhooken (/api/cms/webhook) tömmer båda cacherna.
 let cache = { at: 0, notices: null };
-let pending = null; // anropet till Contentful som pågår just nu, om något gör det
+let pending = null;
+let guideCache = { at: 0, guides: null };
+let pendingGuides = null;
+
 export const clearCmsCache = () => {
   cache = { at: 0, notices: null };
+  guideCache = { at: 0, guides: null };
 };
 
 const fetchNotices = async () => {
@@ -95,6 +133,38 @@ export const publishedNotices = async () => {
     pending = null;
   });
   return pending;
+};
+
+const fetchGuides = async () => {
+  try {
+    const guides = (await entries('guide')).map((entry) => toCmsGuide(entry));
+    console.log(`cms: hämtade ${guides.length} publicerade guider från Contentful`);
+    guideCache = { at: Date.now(), guides };
+    return guides;
+  } catch (err) {
+    console.error(`cms: kunde inte hämta guider (${err.message}) – svarar med ${guideCache.guides ? 'det senast hämtade' : 'en tom lista'}`);
+    return guideCache.guides ?? [];
+  }
+};
+
+export const publishedGuides = async () => {
+  if (!cmsConfigured()) return [];
+  if (guideCache.guides && Date.now() - guideCache.at < config.cmsCacheSeconds * 1000) return guideCache.guides;
+  pendingGuides ??= fetchGuides().finally(() => {
+    pendingGuides = null;
+  });
+  return pendingGuides;
+};
+
+// Slår upp en guide i CMS:et utifrån Postgres-raden. Matchar först på guideId / utpost-guide-<id>
+// (som är stabilt även när staging kallstartar och seeden slumpar nya sluggar) och annars på slug.
+export const guideBody = async (guide) => {
+  const all = await publishedGuides();
+  const numId = Number(guide.id);
+  const match =
+    all.find((g) => g.guideId === numId || g.id === `utpost-guide-${guide.id}`) ??
+    all.find((g) => g.slug && g.slug === guide.slug);
+  return match?.body ?? [];
 };
 
 // Förhandsgranskningen: preview-API:et ger senaste versionen av allt. Vi hämtar det publicerade

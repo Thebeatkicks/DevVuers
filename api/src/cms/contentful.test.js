@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { config } from '../config.js';
-import { toParagraphs, publishedNotices, previewNotices, clearCmsCache } from './contentful.js';
+import { toParagraphs, toGuideBlocks, publishedNotices, previewNotices, guideBody, clearCmsCache } from './contentful.js';
 
 // Enhetstester för CMS-lagret (M9). Contentful anropas aldrig: fetch byts mot en funktion som
 // svarar med det Contentful skulle ha svarat. Så går testerna i pipelinen utan nycklar och
@@ -60,6 +60,43 @@ describe('rich text → stycken av textbitar', () => {
     const rubrik = { nodeType: 'heading-2', data: {}, content: [text('Rubrik')] };
     expect(toParagraphs(document(rubrik, paragraph(text('Stycke'))))).toHaveLength(1);
     expect(toParagraphs(undefined)).toEqual([]);
+  });
+
+  it('guidernas brödtext stöder rubriker (h2, h3), punktlistor (li) och stycken (p)', () => {
+    const h2 = { nodeType: 'heading-2', data: {}, content: [text('Om leden')] };
+    const h3 = { nodeType: 'heading-3', data: {}, content: [text('Bra att veta')] };
+    const ul = {
+      nodeType: 'unordered-list',
+      data: {},
+      content: [
+        { nodeType: 'list-item', data: {}, content: [paragraph(text('Vindskydd vid halva sträckan'))] },
+        { nodeType: 'list-item', data: {}, content: [paragraph(text('Ingen service utmed leden'))] },
+      ],
+    };
+    const p = paragraph(text('Senast granskad av redaktionen.', ['italic']));
+
+    expect(toGuideBlocks(document(h2, h3, ul, p))).toEqual([
+      { kind: 'h2', runs: [{ text: 'Om leden', bold: false, italic: false, href: null }] },
+      { kind: 'h3', runs: [{ text: 'Bra att veta', bold: false, italic: false, href: null }] },
+      { kind: 'li', runs: [{ text: 'Vindskydd vid halva sträckan', bold: false, italic: false, href: null }] },
+      { kind: 'li', runs: [{ text: 'Ingen service utmed leden', bold: false, italic: false, href: null }] },
+      { kind: 'p', runs: [{ text: 'Senast granskad av redaktionen.', bold: false, italic: true, href: null }] },
+    ]);
+  });
+
+  it('guideBody matchar rätt guide via guideId även om sluggen har slumpats om vid kallstart', async () => {
+    const guideEntry = entry('utpost-guide-7', {
+      guideId: 7,
+      slug: 'gamla-myrleden-7',
+      title: 'Gamla Myrleden 7',
+      body: document({ nodeType: 'heading-2', data: {}, content: [text('Om Gamla Myrleden 7')] }),
+    });
+    vi.stubGlobal('fetch', fakeContentful([guideEntry]));
+
+    const blocks = await guideBody({ id: 7, slug: 'ny-slumpad-slug-7' });
+    expect(blocks).toEqual([
+      { kind: 'h2', runs: [{ text: 'Om Gamla Myrleden 7', bold: false, italic: false, href: null }] },
+    ]);
   });
 });
 

@@ -5,6 +5,7 @@
   "workspaces": ["api", "client", "shared"],
   "scripts": {
     "cms:setup": "node --env-file-if-exists=.env scripts/cms-setup.mjs",
+    "cms:migrate": "node --env-file-if-exists=.env scripts/cms-migrate-guides.mjs",
     "dev": "concurrently -n api,client -c blue,yellow \"npm run dev --workspace=api\" \"npm run dev --workspace=client\"",
     "dev:client": "npm run dev --workspace=client",
     "dev:api": "npm run dev --workspace=api",

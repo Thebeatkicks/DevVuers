@@ -4,9 +4,11 @@ import { useRoute } from "vue-router";
 import { useQuery } from "@urql/vue";
 import { graphql } from "../gql";
 import NoticeList from "../components/NoticeList.vue";
+import RichText from "../components/RichText.vue";
 
 // Detaljvyn: frågan tar en variabel ($slug) i stället för att klistra in adressen i strängen.
 // Codegen genererar typen för variablerna också – skicka fel typ, och typecheck säger ifrån.
+// M9 (Steg 4): brödtexten hämtas som strukturerad data (body) från CMS:et via GraphQL – ingen bodyHtml.
 const GuideDocument = graphql(/* GraphQL */ `
   query Guide($slug: String!) {
     guide(slug: $slug) {
@@ -15,7 +17,15 @@ const GuideDocument = graphql(/* GraphQL */ `
       region
       difficulty
       lengthKm
-      bodyHtml
+      body {
+        kind
+        runs {
+          text
+          bold
+          italic
+          href
+        }
+      }
       notices {
         id
         title
@@ -52,11 +62,11 @@ const { data, fetching, error } = useQuery({ query: GuideDocument, variables });
       {{ data.guide.region }} · {{ data.guide.difficulty }} ·
       {{ data.guide.lengthKm }} km
     </p>
-    <!-- M9: notiserna för den här guiden kommer ur CMS:et, som data. Jämför med raden under. -->
+    <!-- M9: både notiserna och guidens brödtext kommer ur CMS:et som strukturerad data – utan v-html. -->
     <NoticeList :notices="data.guide.notices" />
-    <!-- Redaktionens HTML ur databasen (skuld 10). Rå HTML från servern – flyttar till CMS i M9. -->
-    <!-- eslint-disable-next-line vue/no-v-html -->
-    <div class="body" v-html="data.guide.bodyHtml"></div>
+    <div class="body">
+      <RichText :paragraphs="data.guide.body" />
+    </div>
   </article>
 </template>
 

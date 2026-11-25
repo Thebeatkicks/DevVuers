@@ -9,6 +9,7 @@ export interface TextRun {
 }
 
 export interface Paragraph {
+  kind?: string | null;
   runs: TextRun[];
 }
 
