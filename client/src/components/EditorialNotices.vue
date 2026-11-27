@@ -39,7 +39,7 @@ const { data, fetching, error } = useQuery({
 </script>
 
 <template>
-  <section aria-label="Redaktionen">
+  <section aria-label="Redaktionen" min-hei>
     <label v-if="isEditor">
       <input v-model="showDrafts" type="checkbox" /> Förhandsgranska: visa
       utkast
@@ -51,3 +51,9 @@ const { data, fetching, error } = useQuery({
     <NoticeList v-else-if="data" :notices="data.notices" />
   </section>
 </template>
+
+<style scoped>
+section {
+  min-height: 220px;
+}
+</style>

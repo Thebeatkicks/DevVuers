@@ -20,8 +20,8 @@
 
 | # | Vad vi ändrade | Siffran vi ville flytta | Före | Efter | PR |
 |---|---|---|---|---|---|
-| 1 | | | | | |
-| 2 | | | | | |
+| 1 | Lagt populära guider i en egen komponent | CLS | 0,18 | 0,18 | RÖTT |
+| 2 | Lade till gzip i nginx | JavaScript och totalvikten | 148-150 kb & 159-163 kb | 62-63 kb & 70-73 kb | RÖTT |
 | 3 | | | | | |
 
 ## Efter
