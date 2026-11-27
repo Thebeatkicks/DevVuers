@@ -99,9 +99,9 @@ jobs:
           scanners: vuln,secret,misconfig
           severity: HIGH,CRITICAL
           ignore-unfixed: true
-          exit-code: '1'
+          exit-code: "1"
           trivyignores: .trivyignore
-      
+
       - name: Bygg imagerna och starta appen
         run: docker compose up -d --build --wait
 
@@ -117,19 +117,52 @@ jobs:
           image-ref: utpost-api
           severity: HIGH,CRITICAL
           ignore-unfixed: true
-          exit-code: '1'
+          exit-code: "1"
           trivyignores: .trivyignore
-          
+
       - name: Appen – ZAP baseline
         uses: zaproxy/action-baseline@v0.15.0
         with:
-          target: 'http://localhost:3001'
-          rules_file_name: '.zap/rules.tsv'
-          cmd_options: '-a -I'
+          target: "http://localhost:3001"
+          rules_file_name: ".zap/rules.tsv"
+          cmd_options: "-a -I"
           fail_action: true
           allow_issue_writing: false
           artifact_name: zap-rapport
       - name: Loggar från appen vid fel
+        if: failure()
+        run: docker compose logs --tail 50 api client
+
+  performance:
+    name: Prestanda
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Bygg imagerna och starta appen (compose)
+        run: JWT_SECRET="$(openssl rand -hex 32)" docker compose up -d --build --wait
+
+      # Skriptet väntar själv tills API:et har seedat och svarar. Det behöver inga node_modules:
+      # Lighthouse CI hämtas med npx, och Chrome finns redan på runnern.
+      - name: Mät – Lighthouse mot startsidan, en guide och en tur
+        run: npm run perf -- --runs 3
+
+      - name: Budgeten – gränserna i lighthouserc.json
+        run: npx --yes @lhci/cli@0.16.1 assert
+
+      - name: Spara rapporterna
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: lighthouse-rapporter
+          path: .lighthouseci
+          include-hidden-files: true # mappen börjar med punkt – utan den här raden laddas ingenting upp
+          retention-days: 7
+
+      - name: Loggar från appen (bara om något gick fel)
         if: failure()
         run: docker compose logs --tail 50 api client
 
