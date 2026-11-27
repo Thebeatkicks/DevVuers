@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, watchEffect } from "vue";
+import { ref, computed, watch } from "vue";
 import { useRoute } from "vue-router";
 import type { Tour, TourLog } from "@utpost/shared";
 import { elevationGain } from "../lib/tours";
@@ -13,20 +13,24 @@ const tourDetails = ref<TourWithLogs | null>(null);
 const loading = ref(true);
 const errorParagraph = ref<string | null>(null);
 
-watchEffect(async () => {
-  try {
-    const response = await fetch(`/api/tours/${String(route.params.id)}`);
-    if (!response.ok) {
-      throw new Error(`API svarade ${response.status}`);
+watch(
+  () => route.params.id,
+  async (id) => {
+    try {
+      const response = await fetch(`/api/tours/${String(id)}`);
+      if (!response.ok) {
+        throw new Error(`API svarade ${response.status}`);
+      }
+      tourDetails.value = (await response.json()) as TourWithLogs;
+    } catch (error) {
+      console.error("Kunde inte hämta turens detaljer", error);
+      errorParagraph.value = "Kunde inte ladda turen.";
+    } finally {
+      loading.value = false;
     }
-    tourDetails.value = (await response.json()) as TourWithLogs;
-  } catch (error) {
-    console.error("Kunde inte hämta turens detaljer", error);
-    errorParagraph.value = "Kunde inte ladda turen.";
-  } finally {
-    loading.value = false;
-  }
-});
+  },
+  { immediate: true },
+);
 
 const climb = computed<number>(() =>
   tourDetails.value ? elevationGain(tourDetails.value.logs) : 0,

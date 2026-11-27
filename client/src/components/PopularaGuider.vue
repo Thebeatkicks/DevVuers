@@ -22,13 +22,13 @@ const { data, fetching, error } = useQuery({
 </script>
 
 <template>
-    <h2>Populära guider</h2>
-    <p v-if="fetching">Laddar…</p>
-    <p v-else-if="error" role="alert">Kunde inte hämta guider.</p>
-    <ul v-else>
-        <li v-for="g in data?.popularGuides" :key="g.id">
-        <RouterLink :to="`/guider/${g.slug}`">{{ g.title }}</RouterLink>
-        – {{ g.region }}, {{ g.difficulty }}, {{ g.lengthKm }} km
-        </li>
-    </ul>
+  <h2>Populära guider</h2>
+  <p v-if="fetching">Laddar…</p>
+  <p v-else-if="error" role="alert">Kunde inte hämta guider.</p>
+  <ul v-else>
+    <li v-for="g in data?.popularGuides" :key="g.id">
+      <RouterLink :to="`/guider/${g.slug}`">{{ g.title }}</RouterLink>
+      – {{ g.region }}, {{ g.difficulty }}, {{ g.lengthKm }} km
+    </li>
+  </ul>
 </template>
