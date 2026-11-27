@@ -1,13 +1,6 @@
 import { createRouter, createWebHistory } from "vue-router";
 import { useAuthStore } from "@/stores/auth";
 import HomeView from "../views/HomeView.vue";
-import GuidesView from "../views/GuidesView.vue";
-import GuideDetails from "../views/GuideDetails.vue";
-import ToursView from "@/views/ToursView.vue";
-import TourDetail from "@/views/TourDetail.vue";
-import ProfileView from "@/views/ProfileView.vue";
-import RegisterView from "@/views/RegisterView.vue";
-import LoginView from "@/views/LoginView.vue";
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -25,12 +18,12 @@ const router = createRouter({
     {
       path: "/guides",
       name: "guides",
-      component: GuidesView,
+      component: () => import("../views/GuidesView.vue"),
     },
     {
       path: "/guides/:id",
       name: "guide-details",
-      component: GuideDetails,
+      component: () => import("../views/GuideDetailView.vue"),
     },
     {
       path: "/about",
@@ -43,31 +36,31 @@ const router = createRouter({
     {
       path: "/tours",
       name: "turer",
-      component: ToursView,
+      component: () => import("../views/ToursView.vue"),
     },
     {
       path: "/tours/:id",
       name: "tour-detail",
-      component: TourDetail,
+      component: () => import("../views/TourDetail.vue"),
       meta: { requiresAuth: true },
     },
     {
       path: "/logga-in",
       alias: "/login",
       name: "login",
-      component: LoginView,
+      component: () => import("../views/LoginView.vue"),
     },
     {
       path: "/profile",
       alias: "/profil",
       name: "profil",
-      component: ProfileView,
+      component: () => import("../views/ProfileView.vue"),
       meta: { requiresAuth: true },
     },
     {
       path: "/register",
       name: "registrera",
-      component: RegisterView,
+      component: () => import("../views/RegisterView.vue"),
     },
   ],
 });
