@@ -2,7 +2,11 @@
   "name": "utpost",
   "private": true,
   "version": "1.4.2",
-  "workspaces": ["api", "client", "shared"],
+  "workspaces": [
+    "api",
+    "client",
+    "shared"
+  ],
   "scripts": {
     "cms:setup": "node --env-file-if-exists=.env scripts/cms-setup.mjs",
     "cms:migrate": "node --env-file-if-exists=.env scripts/cms-migrate-guides.mjs",
@@ -19,7 +23,9 @@
     "build": "npm run build --workspace=client",
     "migrate:logs": "npm run migrate:logs --workspace=api",
     "codegen": "npm run codegen --workspace=client",
-    "test:api": "npm run test --workspace=api"
+    "test:api": "npm run test --workspace=api",
+    "perf": "node scripts/perf.mjs",
+    "mat": "node scripts/mat-upload.mjs"
   },
   "devDependencies": {
     "concurrently": "^9.1.2"

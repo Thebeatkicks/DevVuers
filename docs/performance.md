@@ -8,9 +8,9 @@
 
 | Sida | LCP | CLS | JavaScript | Bilder | Totalt |
 |---|---|---|---|---|---|
-| Startsidan | 2,9 s | 0,13 | 210 kB | 5261 kB | 5507 kB |
-| En guide | 8 s | 0,16 | 208 kB | 1099 kB | 1319 kB |
-| En tur | 3,7 s | 0 | 334 kB | 0 kB | 350 kB |
+| Startsidan | 2,1 s | 0,18 | 148 kB | 0 kB | 163 kB |
+| En guide | 2,3 s | 0 | 150 kB | 0 kB | 163 kB |
+| En tur | 0,8 s | 0 | 148 kB | 0 kB | 159 kB |
 
 **Vad som är LCP-elementet på startsidan:** *(DevTools → Performance → Local metrics)*
 
