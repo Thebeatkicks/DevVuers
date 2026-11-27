@@ -10,6 +10,7 @@ export const typeDefs = /* GraphQL */ `
     difficulty: String!
     lengthKm: Float!
     bodyHtml: String!
+    body: [Paragraph!]!
     heroImage: String
     published: Boolean!
     updatedAt: String!
@@ -28,6 +29,7 @@ export const typeDefs = /* GraphQL */ `
     href: String
   }
   type Paragraph {
+    kind: String
     runs: [TextRun!]!
   }
   type Notice {

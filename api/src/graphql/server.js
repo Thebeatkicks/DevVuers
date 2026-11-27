@@ -6,7 +6,7 @@ import { pool } from '../db/client.js';
 import { typeDefs } from './schema.js';
 import { resolvers } from './resolvers.js';
 import { createLoaders } from './loaders.js';
-import { publishedNotices, previewNotices } from '../cms/contentful.js';
+import { publishedNotices, previewNotices, guideBody } from '../cms/contentful.js';
 // Samma token som REST-routerna använder (lib/auth.js). Ingen token = user är null;
 // det är varje resolvers sak att avgöra om det räcker.
 const userFrom = (request) => {
@@ -58,7 +58,7 @@ export const yoga = createYoga({
       stats,
       query,
       loaders: createLoaders(query, stats),
-      cms: { notices: publishedNotices, previewNotices },
+      cms: { notices: publishedNotices, previewNotices, guideBody },
     };
     },
 });

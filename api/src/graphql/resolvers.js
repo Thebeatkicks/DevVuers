@@ -45,6 +45,7 @@ export const resolvers = {
   // Fältresolvers: översätter kolumnnamn till schemats namn.
   Guide: {
     notices: async (guide, args, { cms }) => (await cms.notices()).filter((notice) => notice.guideSlug === guide.slug),
+    body: async (guide, args, { cms }) => (cms?.guideBody ? cms.guideBody(guide) : []),
     lengthKm: (guide) => guide.length_km,
     bodyHtml: (guide) => guide.body_html,
     heroImage: (guide) => guide.hero_image,

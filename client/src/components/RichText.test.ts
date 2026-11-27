@@ -48,4 +48,28 @@ describe("RichText", () => {
       screen.getByText("<img src=x onerror=alert(1)>"),
     ).toBeInTheDocument();
   });
+
+  it("renderar rubriker (h2, h3) och grupperar listpunkter (li) i en ul", () => {
+    const { container } = render(RichText, {
+      props: {
+        paragraphs: [
+          { kind: "h2", runs: [run("Om leden")] },
+          { kind: "h3", runs: [run("Bra att veta")] },
+          { kind: "li", runs: [run("Vindskydd vid halva sträckan")] },
+          { kind: "li", runs: [run("Ingen service utmed leden")] },
+          { kind: "p", runs: [run("Senast granskad.", { italic: true })] },
+        ],
+      },
+    });
+
+    expect(
+      screen.getByRole("heading", { level: 2, name: "Om leden" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", { level: 3, name: "Bra att veta" }),
+    ).toBeInTheDocument();
+    expect(container.querySelectorAll("ul")).toHaveLength(1);
+    expect(container.querySelectorAll("li")).toHaveLength(2);
+    expect(screen.getByText("Senast granskad.").tagName).toBe("EM");
+  });
 });
